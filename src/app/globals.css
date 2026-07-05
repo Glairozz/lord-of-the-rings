@@ -1,26 +1,100 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+
+@theme {
+  --font-cinzel: var(--font-cinzel);
+  --font-serif: var(--font-merriweather), Georgia, serif;
+}
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0d1a29;
+  --foreground: #ddd;
+  --gold: #b8860b;
+  --gold-light: #ffcc66;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
+  background: linear-gradient(135deg, #0d1a29 0%, #1a2f4a 50%, #0d1a29 100%);
+  background-attachment: fixed;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(circle at 20% 50%, rgba(255, 204, 102, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(184, 134, 11, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 40% 20%, rgba(255, 204, 102, 0.02) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+  animation: floatingGradient 20s ease-in-out infinite;
+}
+
+@keyframes floatingGradient {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-20px) rotate(1deg);
+  }
+  66% {
+    transform: translateY(20px) rotate(-1deg);
+  }
+}
+
+::selection {
+  background: rgba(184, 134, 11, 0.3);
+  color: #ffcc66;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0d1a29;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #b8860b, #ffcc66);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #ffcc66;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-cinzel), cursive;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+section {
+  position: relative;
+  z-index: 2;
 }
