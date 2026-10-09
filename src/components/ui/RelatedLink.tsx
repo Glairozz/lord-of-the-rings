@@ -9,9 +9,11 @@ export default function RelatedLink({ entity, note }: { entity: EntityRef; note?
       href={entity.href}
       className="group flex items-center gap-3 rounded-lg border border-border/70 p-2 transition-colors hover:border-gold/60 hover:bg-night-3"
     >
-      <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-md bg-night-2">
-        <LoreImage src={entity.image} alt={entity.name} fill sizes="44px" className="object-cover" />
-      </span>
+      {entity.image && (
+        <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-md bg-night-2">
+          <LoreImage src={entity.image} alt={entity.name} fill sizes="44px" className="object-cover" />
+        </span>
+      )}
       <span className="min-w-0">
         <span className="block truncate text-sm text-parchment transition-colors group-hover:text-gold-light">
           {entity.name}

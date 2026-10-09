@@ -1,4 +1,5 @@
 import type { Character } from '@/types/content';
+import { characterImages } from './images';
 
 /**
  * Character records.
@@ -17,6 +18,7 @@ export const characters: Character[] = [
   {
     id: 'bilbo',
     slug: 'bilbo-baggins',
+    image: characterImages.bilbo,
     name: 'Bilbo Baggins',
     aliases: ['Bilba Labingi (earlier draft name)', 'Ringwinner', 'Luckwearer', 'Barrel-rider'],
     titles: ['Mad Baggins (local nickname)'],
@@ -95,6 +97,7 @@ export const characters: Character[] = [
   {
     id: 'frodo',
     slug: 'frodo-baggins',
+    image: characterImages.frodo,
     name: 'Frodo Baggins',
     titles: ['Ring-bearer', 'Elf-friend'],
     race: 'hobbits',
@@ -171,6 +174,7 @@ export const characters: Character[] = [
   {
     id: 'samwise',
     slug: 'samwise-gamgee',
+    image: characterImages.samwise,
     name: 'Samwise Gamgee',
     aliases: ['Sam', 'Samwise the Brave'],
     race: 'hobbits',
@@ -243,6 +247,7 @@ export const characters: Character[] = [
   {
     id: 'merry',
     slug: 'meriadoc-brandybuck',
+    image: characterImages.meriadoc,
     name: 'Meriadoc Brandybuck',
     aliases: ['Merry', 'Holdwine', 'Kalimac Brandagamba (earlier form)'],
     race: 'hobbits',
@@ -291,6 +296,7 @@ export const characters: Character[] = [
   {
     id: 'pippin',
     slug: 'peregrin-took',
+    image: characterImages.peregrin,
     name: 'Peregrin Took',
     aliases: ['Pippin', 'Ernil i Pheriannath', 'Tuckborough’s heir'],
     race: 'hobbits',
@@ -331,6 +337,7 @@ export const characters: Character[] = [
   {
     id: 'thorin',
     slug: 'thorin-oakenshield',
+    image: characterImages.thorin,
     name: 'Thorin Oakenshield',
     aliases: ['Thorin II', 'King under the Mountain'],
     titles: ['King of Durin’s Folk', 'King under the Mountain'],
@@ -364,7 +371,7 @@ export const characters: Character[] = [
     sourceIds: ['hobbit'],
   },
   {
-    id: 'balin', slug: 'balin', name: 'Balin', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male',
+    id: 'balin', slug: 'balin', image: characterImages.balin, name: 'Balin', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male',
     summary: 'A wise and kindly Dwarf of Thorin’s company who later led a doomed attempt to recolonise Moria.',
     overview: 'Balin is the elder statesman of the quest of Erebor. His later expedition to Moria, recorded in the Book of Mazarbul, gives The Fellowship of the Ring its most poignant warning.',
     relationships: [
@@ -377,7 +384,7 @@ export const characters: Character[] = [
     continuity: 'tolkien-texts', sourceIds: ['hobbit', 'lotr'],
   },
   {
-    id: 'gimli', slug: 'gimli', name: 'Gimli', aliases: ['Gimli Elf-friend', 'Lockbearer'], race: 'dwarves', peopleId: 'durins-folk', gender: 'Male',
+    id: 'gimli', slug: 'gimli', image: characterImages.gimli, name: 'Gimli', aliases: ['Gimli Elf-friend', 'Lockbearer'], race: 'dwarves', peopleId: 'durins-folk', gender: 'Male',
     summary: 'The Dwarf of the Fellowship, whose friendship with Legolas becomes a symbol of reconciliation between their peoples.',
     overview: 'Gimli represents the best of Durin’s Folk: tough, candid and capable of change. His awe of Galadriel and his deepening friendship with the Elf Legolas show how old enmities can be unlearned.',
     biography: [
@@ -400,64 +407,64 @@ export const characters: Character[] = [
     continuity: 'tolkien-texts', sourceIds: ['lotr'],
   },
   {
-    id: 'thrain', slug: 'thrain', name: 'Thráin II', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male',
+    id: 'thrain', slug: 'thrain', image: characterImages.thrain, name: 'Thráin II', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male',
     summary: 'Father of Thorin Oakenshield, captured and tormented by Sauron, from whom Sauron took a Dwarf-ring.',
     overview: 'Thráin’s fate links the quest of Erebor to the larger history of the Rings: he was imprisoned in Dol Guldur and his Ring taken by Sauron.',
     relationships: [{ targetId: 'thorin', type: 'relative', note: 'Son' }, { targetId: 'gandalf', type: 'ally' }],
     continuity: 'supplementary', sourceIds: ['hobbit', 'unfinished-tales'],
   },
   {
-    id: 'thror', slug: 'thror', name: 'Thrór', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male',
+    id: 'thror', slug: 'thror', image: characterImages.thror, name: 'Thrór', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male',
     summary: 'Grandfather of Thorin and King under the Mountain before Smaug, later slain by the Orc Azog.',
     overview: 'Thrór’s hoard drew Smaug to Erebor, and his death at Azog’s hands began the war that shaped Thorin’s life.',
     continuity: 'supplementary', sourceIds: ['hobbit', 'unfinished-tales'],
   },
   {
-    id: 'dain', slug: 'dain-ironfoot', name: 'Dáin Ironfoot', aliases: ['Dáin II'], race: 'dwarves', peopleId: 'durins-folk', gender: 'Male',
+    id: 'dain', slug: 'dain-ironfoot', image: characterImages.dain, name: 'Dáin Ironfoot', aliases: ['Dáin II'], race: 'dwarves', peopleId: 'durins-folk', gender: 'Male',
     summary: 'Dwarven lord who came to the aid of Thorin at the Battle of Five Armies and became King under the Mountain.',
     overview: 'Dáin’s arrival with his army turned the tide of the Battle of Five Armies, and he ruled a renewed Erebor into the events of The Lord of the Rings.',
     continuity: 'tolkien-texts', sourceIds: ['hobbit', 'lotr'],
   },
   {
-    id: 'durin', slug: 'durin', name: 'Durin', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male',
+    id: 'durin', slug: 'durin', image: characterImages.durin, name: 'Durin', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male',
     summary: 'The eldest of the Seven Fathers of the Dwarves and founder of the line of Durin’s Folk.',
     overview: 'Durin the Deathless is the founding figure of the Longbeards. Several later kings were held to be his reincarnation, which is why Khazad-dûm is also called Moria, the Black Pit, after its fall.',
     continuity: 'supplementary', sourceIds: ['silmarillion', 'unfinished-tales'],
   },
   {
-    id: 'gloin', slug: 'gloin', name: 'Glóin', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male',
+    id: 'gloin', slug: 'gloin', image: characterImages.gloin, name: 'Glóin', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male',
     summary: 'A Dwarf of Thorin’s company and father of Gimli, later a member of the Council of Elrond.',
     overview: 'Glóin survived the quest of Erebor and appears in Rivendell decades later, tying the two stories together.',
     continuity: 'tolkien-texts', sourceIds: ['hobbit', 'lotr'],
   },
   {
-    id: 'bombur', slug: 'bombur', name: 'Bombur', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male',
+    id: 'bombur', slug: 'bombur', image: characterImages.bombur, name: 'Bombur', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male',
     summary: 'A jovial, very heavy Dwarf of Thorin’s company, noted for comic mishaps.',
     overview: 'Bombur provides much of The Hobbit’s comic relief, falling into the enchanted stream of Mirkwood and sleeping through the spiders’ attack.',
     continuity: 'tolkien-texts', sourceIds: ['hobbit'],
   },
   {
-    id: 'dwalin', slug: 'dwalin', name: 'Dwalin', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male',
+    id: 'dwalin', slug: 'dwalin', image: characterImages.dwalin, name: 'Dwalin', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male',
     summary: 'A fierce Dwarf warrior and the first of Thorin’s companions to arrive at Bag End.',
     overview: 'Dwalin is a steady fighter of the company and, like most of Thorin’s kin, remains in the background of the narrative while lending it weight.',
     continuity: 'tolkien-texts', sourceIds: ['hobbit'],
   },
   {
-    id: 'kili', slug: 'kili', name: 'Kíli', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male',
+    id: 'kili', slug: 'kili', image: characterImages.kili, name: 'Kíli', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male',
     summary: 'A young Dwarf of Thorin’s company, skilled with a bow, who fell defending Thorin at the Battle of Five Armies.',
     overview: 'Kíli is one of the youngest of the company. In the films his role is greatly expanded, including a romance with the invented character Tauriel.',
     continuity: 'tolkien-texts', sourceIds: ['hobbit'],
   },
   {
-    id: 'fili', slug: 'fili', name: 'Fíli', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male',
+    id: 'fili', slug: 'fili', image: characterImages.fili, name: 'Fíli', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male',
     summary: 'Kíli’s elder brother and heir to Thorin, who died with him at the Battle of Five Armies.',
     overview: 'Fíli is Thorin’s sister-son and, briefly, his designated heir. He falls guarding his uncle in the battle.',
     continuity: 'tolkien-texts', sourceIds: ['hobbit'],
   },
-  { id: 'nori', slug: 'nori', name: 'Nori', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male', summary: 'A Dwarf of Thorin’s company known for his resourcefulness and distinctive appearance.', overview: 'Nori is one of the twelve companions of Thorin. His personality is barely developed in the book; the films give him a more prominent, roguish character.', continuity: 'tolkien-texts', sourceIds: ['hobbit'] },
-  { id: 'dori', slug: 'dori', name: 'Dori', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male', summary: 'A strong and dependable Dwarf of Thorin’s company, often seen carrying Bilbo.', overview: 'Dori is the strongest of the company and repeatedly rescues Bilbo in the book, notably during the Misty Mountain storm.', continuity: 'tolkien-texts', sourceIds: ['hobbit'] },
-  { id: 'oin', slug: 'oin', name: 'Óin', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male', summary: 'A Dwarf of Thorin’s company remembered for his skill at fire-making and, in later lore, healing.', overview: 'Óin belongs to the background company in The Hobbit; later writings and the films associate him with healing knowledge.', continuity: 'tolkien-texts', sourceIds: ['hobbit'] },
-  { id: 'bifur', slug: 'bifur', name: 'Bifur', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male', summary: 'A Dwarf of Thorin’s company who, in the films, speaks only in an unfamiliar tongue after a head-wound.', overview: 'Bifur is a minor member of the company. The detail of his lost speech is an invention of the film adaptation.', continuity: 'tolkien-texts', sourceIds: ['hobbit'] },
+  { id: 'nori', slug: 'nori', image: characterImages.nori, name: 'Nori', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male', summary: 'A Dwarf of Thorin’s company known for his resourcefulness and distinctive appearance.', overview: 'Nori is one of the twelve companions of Thorin. His personality is barely developed in the book; the films give him a more prominent, roguish character.', continuity: 'tolkien-texts', sourceIds: ['hobbit'] },
+  { id: 'dori', slug: 'dori', image: characterImages.dori, name: 'Dori', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male', summary: 'A strong and dependable Dwarf of Thorin’s company, often seen carrying Bilbo.', overview: 'Dori is the strongest of the company and repeatedly rescues Bilbo in the book, notably during the Misty Mountain storm.', continuity: 'tolkien-texts', sourceIds: ['hobbit'] },
+  { id: 'oin', slug: 'oin', image: characterImages.oin, name: 'Óin', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male', summary: 'A Dwarf of Thorin’s company remembered for his skill at fire-making and, in later lore, healing.', overview: 'Óin belongs to the background company in The Hobbit; later writings and the films associate him with healing knowledge.', continuity: 'tolkien-texts', sourceIds: ['hobbit'] },
+  { id: 'bifur', slug: 'bifur', image: characterImages.bifur, name: 'Bifur', race: 'dwarves', peopleId: 'durins-folk', gender: 'Male', summary: 'A Dwarf of Thorin’s company who, in the films, speaks only in an unfamiliar tongue after a head-wound.', overview: 'Bifur is a minor member of the company. The detail of his lost speech is an invention of the film adaptation.', continuity: 'tolkien-texts', sourceIds: ['hobbit'] },
 
   /* ------------------------------------------------------------------ */
   /* Elves                                                               */
@@ -465,6 +472,7 @@ export const characters: Character[] = [
   {
     id: 'galadriel',
     slug: 'galadriel',
+    image: characterImages.galadriel,
     name: 'Galadriel',
     aliases: ['Artanis', 'Nerwen', 'Lady of the Wood', 'Lady of Light'],
     titles: ['Lady of Lothlórien', 'Keeper of Nenya'],
@@ -510,6 +518,7 @@ export const characters: Character[] = [
   {
     id: 'elrond',
     slug: 'elrond',
+    image: characterImages.elrond,
     name: 'Elrond',
     aliases: ['Elrond Half-elven', 'Master of Rivendell'],
     titles: ['Lord of Rivendell', 'Keeper of Vilya'],
@@ -551,6 +560,7 @@ export const characters: Character[] = [
   {
     id: 'arwen',
     slug: 'arwen-undomiel',
+    image: characterImages.arwen,
     name: 'Arwen Undómiel',
     aliases: ['Evenstar', 'Arwen Evenstar'],
     race: 'elves',
@@ -577,6 +587,7 @@ export const characters: Character[] = [
   {
     id: 'legolas',
     slug: 'legolas',
+    image: characterImages.legolas,
     name: 'Legolas Greenleaf',
     aliases: ['Legolas Thranduilion'],
     race: 'elves',
@@ -605,6 +616,7 @@ export const characters: Character[] = [
   {
     id: 'thranduil',
     slug: 'thranduil',
+    image: characterImages.thranduil,
     name: 'Thranduil',
     titles: ['Elvenking of Mirkwood'],
     race: 'elves',
@@ -621,6 +633,7 @@ export const characters: Character[] = [
   {
     id: 'celeborn',
     slug: 'celeborn',
+    image: characterImages.celeborn,
     name: 'Celeborn',
     titles: ['Lord of Lothlórien'],
     race: 'elves',
@@ -637,6 +650,7 @@ export const characters: Character[] = [
   {
     id: 'haldir',
     slug: 'haldir',
+    image: characterImages.haldir,
     name: 'Haldir',
     race: 'elves',
     peopleId: 'silvan-elves',
@@ -652,6 +666,7 @@ export const characters: Character[] = [
   {
     id: 'glorfindel',
     slug: 'glorfindel',
+    image: characterImages.glorfindel,
     name: 'Glorfindel',
     race: 'elves',
     peopleId: 'noldor',
@@ -667,6 +682,7 @@ export const characters: Character[] = [
   {
     id: 'tauriel',
     slug: 'tauriel',
+    image: characterImages.tauriel,
     name: 'Tauriel',
     race: 'elves',
     peopleId: 'silvan-elves',
@@ -682,6 +698,7 @@ export const characters: Character[] = [
   {
     id: 'arondir',
     slug: 'arondir',
+    image: characterImages.arondir,
     name: 'Arondir',
     race: 'elves',
     peopleId: 'silvan-elves',
@@ -700,6 +717,7 @@ export const characters: Character[] = [
   {
     id: 'gandalf',
     slug: 'gandalf',
+    image: characterImages.gandalf,
     name: 'Gandalf',
     aliases: ['Mithrandir', 'Olórin', 'Tharkûn', 'Incánus', 'The Grey Pilgrim', 'Gandalf the White'],
     titles: ['The Grey', 'The White', 'Wielder of Narya'],
@@ -749,6 +767,7 @@ export const characters: Character[] = [
   {
     id: 'saruman',
     slug: 'saruman',
+    image: characterImages.saruman,
     name: 'Saruman',
     aliases: ['Saruman the White', 'Curunír', 'Sharkû', 'Saruman of Many Colours'],
     titles: ['Head of the Istari', 'Master of Orthanc'],
@@ -784,6 +803,7 @@ export const characters: Character[] = [
   {
     id: 'radagast',
     slug: 'radagast',
+    image: characterImages.radagast,
     name: 'Radagast',
     aliases: ['Radagast the Brown', 'Aiwendil'],
     race: 'istari',
@@ -799,6 +819,7 @@ export const characters: Character[] = [
   {
     id: 'alatar',
     slug: 'alatar',
+    image: characterImages.alatar,
     name: 'Alatar',
     race: 'istari',
     peopleId: 'istari',
@@ -812,6 +833,7 @@ export const characters: Character[] = [
   {
     id: 'pallando',
     slug: 'pallando',
+    image: characterImages.pallando,
     name: 'Pallando',
     race: 'istari',
     peopleId: 'istari',
@@ -829,6 +851,7 @@ export const characters: Character[] = [
   {
     id: 'aragorn',
     slug: 'aragorn',
+    image: characterImages.aragorn,
     name: 'Aragorn',
     aliases: ['Strider', 'Thorongil', 'Elessar', 'Telcontar', 'The Dúnadan', 'Estel', 'Longshanks'],
     titles: ['Chieftain of the Dúnedain', 'King Elessar of Gondor and Arnor', 'Elfstone'],
@@ -929,6 +952,7 @@ export const characters: Character[] = [
   {
     id: 'boromir',
     slug: 'boromir',
+    image: characterImages.boromir,
     name: 'Boromir',
     aliases: ['Captain of the White Tower'],
     titles: ['Captain-General of Gondor', 'Fellowship of the Ring'],
@@ -984,6 +1008,7 @@ export const characters: Character[] = [
   {
     id: 'faramir',
     slug: 'faramir',
+    image: characterImages.faramir,
     name: 'Faramir',
     titles: ['Captain of Gondor', 'Prince of Ithilien', 'Steward of Gondor'],
     race: 'men',
@@ -1061,6 +1086,7 @@ export const characters: Character[] = [
   {
     id: 'eomer',
     slug: 'eomer',
+    image: characterImages.eomer,
     name: 'Éomer',
     titles: ['Third Marshal of the Mark', 'King of Rohan'],
     race: 'men',
@@ -1082,6 +1108,7 @@ export const characters: Character[] = [
   {
     id: 'theoden',
     slug: 'theoden',
+    image: characterImages.theoden,
     name: 'Théoden',
     titles: ['King of Rohan'],
     race: 'men',
@@ -1104,6 +1131,7 @@ export const characters: Character[] = [
   {
     id: 'denethor',
     slug: 'denethor',
+    image: characterImages.denethor,
     name: 'Denethor II',
     titles: ['Steward of Gondor', 'Lord of Minas Tirith'],
     race: 'men',
@@ -1173,7 +1201,7 @@ export const characters: Character[] = [
     sourceIds: ['lotr', 'silmarillion'],
   },
   {
-    id: 'grima', slug: 'grima-wormtongue', name: 'Gríma Wormtongue', race: 'men', peopleId: 'rohirrim', gender: 'Male',
+    id: 'grima', slug: 'grima-wormtongue', image: characterImages.grima, name: 'Gríma Wormtongue', race: 'men', peopleId: 'rohirrim', gender: 'Male',
     summary: 'Théoden’s treacherous counsellor, secretly in Saruman’s service.',
     overview: 'Gríma embodies the quiet corruption of counsel: he does not fight, he whispers, and he nearly brings down a kingdom from within.',
     relationships: [{ targetId: 'saruman', type: 'servant' }, { targetId: 'theoden', type: 'servant' }],
@@ -1189,6 +1217,7 @@ export const characters: Character[] = [
   {
     id: 'morgoth',
     slug: 'morgoth',
+    image: characterImages.morgoth,
     name: 'Morgoth',
     aliases: ['Melkor', 'Baúglin', 'The Great Enemy', 'The Dark Lord'],
     race: 'ainur',
@@ -1219,6 +1248,7 @@ export const characters: Character[] = [
   {
     id: 'sauron',
     slug: 'sauron',
+    image: characterImages.sauron,
     name: 'Sauron',
     aliases: ['Annatar', 'The Dark Lord', 'The Enemy', 'The Necromancer of Dol Guldur', 'The Lord of the Rings'],
     race: 'ainur',
@@ -1258,6 +1288,7 @@ export const characters: Character[] = [
   {
     id: 'witchking',
     slug: 'witch-king-of-angmar',
+    image: characterImages.witchking,
     name: 'The Witch-king of Angmar',
     aliases: ['Lord of the Nazgûl', 'Chief of the Nine', 'King of Angmar'],
     race: 'men',
@@ -1283,6 +1314,7 @@ export const characters: Character[] = [
   {
     id: 'gollum',
     slug: 'gollum',
+    image: characterImages.gollum,
     name: 'Gollum',
     aliases: ['Sméagol', 'The Ring-bearer before Frodo'],
     race: 'hobbits',
@@ -1328,7 +1360,7 @@ export const characters: Character[] = [
   /* Orcs, Uruk-hai and Trolls                                           */
   /* ------------------------------------------------------------------ */
   {
-    id: 'azog', slug: 'azog', name: 'Azog', aliases: ['Azog the Defiler'], race: 'orcs', peopleId: 'orcs', gender: 'Male',
+    id: 'azog', slug: 'azog', image: characterImages.azog, name: 'Azog', aliases: ['Azog the Defiler'], race: 'orcs', peopleId: 'orcs', gender: 'Male',
     summary: 'The Orc who slew Thrór and was killed by Dáin at the Battle of Azanulbizar; greatly expanded in the films.',
     overview: 'In the Appendices Azog is killed at Azanulbizar. The Hobbit films resurrect him as a surviving villain and a principal antagonist, a major adaptation change.',
     adaptations: ['The films make Azog a living antagonist throughout, though the book’s Appendix records his death at Azanulbizar.'],
@@ -1338,7 +1370,7 @@ export const characters: Character[] = [
     eventIds: ['battle-of-azanulbizar'],
   },
   {
-    id: 'bolg', slug: 'bolg', name: 'Bolg', race: 'orcs', peopleId: 'orcs', gender: 'Male',
+    id: 'bolg', slug: 'bolg', image: characterImages.bolg, name: 'Bolg', race: 'orcs', peopleId: 'orcs', gender: 'Male',
     summary: 'Son of Azog, who led the Orc host at the Battle of Five Armies.',
     overview: 'Bolg commands the Goblin army in The Hobbit’s climactic battle, where he is slain.',
     continuity: 'tolkien-texts',
@@ -1347,7 +1379,7 @@ export const characters: Character[] = [
     relatedIds: ['azog', 'thorin'],
   },
   {
-    id: 'lurtz', slug: 'lurtz', name: 'Lurtz', race: 'orcs', peopleId: 'uruk-hai', gender: 'Male',
+    id: 'lurtz', slug: 'lurtz', image: characterImages.lurtz, name: 'Lurtz', race: 'orcs', peopleId: 'uruk-hai', gender: 'Male',
     summary: 'An Uruk-hai captain created for Peter Jackson’s films, who kills Boromir.',
     overview: 'Lurtz does not appear in the books; the Uruk-hai who kill Boromir are unnamed. He is an adaptation-only character.',
     adaptations: ['Entirely invented for the films.'],
@@ -1356,35 +1388,35 @@ export const characters: Character[] = [
     relatedIds: ['boromir', 'saruman'],
   },
   {
-    id: 'ugluk', slug: 'ugluk', name: 'Uglúk', race: 'orcs', peopleId: 'uruk-hai', gender: 'Male',
+    id: 'ugluk', slug: 'ugluk', image: characterImages.ugluk, name: 'Uglúk', race: 'orcs', peopleId: 'uruk-hai', gender: 'Male',
     summary: "Leader of Saruman's Uruk-hai band that captured Merry and Pippin.",
     overview: 'Uglúk is the disciplined, loyal captain of the Isengard Uruk-hai, notable for keeping his company together against Grishnákh’s Mordor Orcs.',
     continuity: 'tolkien-texts', sourceIds: ['lotr'],
     relatedIds: ['grishnakh', 'mauhur', 'saruman'],
   },
   {
-    id: 'grishnakh', slug: 'grishnakh', name: 'Grishnákh', race: 'orcs', peopleId: 'orcs', gender: 'Male',
+    id: 'grishnakh', slug: 'grishnakh', image: characterImages.grishnakh, name: 'Grishnákh', race: 'orcs', peopleId: 'orcs', gender: 'Male',
     summary: 'A cunning Orc captain from Mordor who joined the pursuit of the hobbits.',
     overview: 'Grishnákh represents the fractious, self-serving side of Orcish nature, scheming for the Ring on Sauron’s behalf.',
     continuity: 'tolkien-texts', sourceIds: ['lotr'],
     relatedIds: ['ugluk'],
   },
   {
-    id: 'mauhur', slug: 'mauhur', name: 'Mauhúr', race: 'orcs', peopleId: 'uruk-hai', gender: 'Male',
+    id: 'mauhur', slug: 'mauhur', image: characterImages.mauhur, name: 'Mauhúr', race: 'orcs', peopleId: 'uruk-hai', gender: 'Male',
     summary: "An Uruk-hai captain of the band Saruman sent to accompany his scouts.",
     overview: 'Mauhúr appears briefly in the pursuit across Rohan, one of the several named captains that give the Orc-hosts a sense of real organization.',
     continuity: 'tolkien-texts', sourceIds: ['lotr'],
     relatedIds: ['ugluk'],
   },
   {
-    id: 'gorbag', slug: 'gorbag', name: 'Gorbag', race: 'orcs', peopleId: 'orcs', gender: 'Male',
+    id: 'gorbag', slug: 'gorbag', image: characterImages.gorbag, name: 'Gorbag', race: 'orcs', peopleId: 'orcs', gender: 'Male',
     summary: 'Captain of the Uruks of Minas Morgul who quarrelled with Shagrat over Frodo’s belongings.',
     overview: 'The Gorbag–Shagrat scene is one of Tolkien’s most revealing depictions of Orc society: loyal only by fear, ready to betray for plunder.',
     continuity: 'tolkien-texts', sourceIds: ['lotr'],
     relatedIds: ['shagrat', 'sauron'],
   },
   {
-    id: 'shagrat', slug: 'shagrat', name: 'Shagrat', race: 'orcs', peopleId: 'orcs', gender: 'Male',
+    id: 'shagrat', slug: 'shagrat', image: characterImages.shagrat, name: 'Shagrat', race: 'orcs', peopleId: 'orcs', gender: 'Male',
     summary: 'Captain of the Tower of Cirith Ungol, left holding Frodo after Shelob’s attack.',
     overview: 'Shagrat’s quarrel with Gorbag and his flight with Frodo’s mithril coat create the confusion in which Sam rescues Frodo.',
     continuity: 'tolkien-texts', sourceIds: ['lotr'],
@@ -1397,6 +1429,7 @@ export const characters: Character[] = [
   {
     id: 'smaug',
     slug: 'smaug',
+    image: characterImages.smaug,
     name: 'Smaug',
     aliases: ['Smaug the Golden', 'Smaug the Magnificent', 'The Dragon of Erebor'],
     race: 'dragons',
@@ -1424,27 +1457,27 @@ export const characters: Character[] = [
     sourceIds: ['hobbit'],
   } as Character,
   {
-    id: 'glaurung', slug: 'glaurung', name: 'Glaurung', race: 'dragons', peopleId: 'dragons', gender: 'Male',
+    id: 'glaurung', slug: 'glaurung', image: characterImages.glaurung, name: 'Glaurung', race: 'dragons', peopleId: 'dragons', gender: 'Male',
     summary: 'The first of the great dragons and the “Father of Dragons”, who fought in the Wars of Beleriand.',
     overview: 'Glaurung, like Smaug after him, is a fire-drake of terrible cunning; he deceived Túrin and Nienor and was slain by Túrin at last.',
     continuity: 'supplementary', sourceIds: ['silmarillion', 'children-of-hurin'],
     relatedIds: ['morgoth'],
   },
   {
-    id: 'ancalagon', slug: 'ancalagon', name: 'Ancalagon the Black', race: 'dragons', peopleId: 'dragons', gender: 'Male',
+    id: 'ancalagon', slug: 'ancalagon', image: characterImages.ancalagon, name: 'Ancalagon the Black', race: 'dragons', peopleId: 'dragons', gender: 'Male',
     summary: 'The greatest of Morgoth’s winged dragons, destroyed by Eärendil in the War of Wrath.',
     overview: 'Ancalagon’s fall broke Thangorodrim and ended the First Age’s last battle.',
     continuity: 'supplementary', sourceIds: ['silmarillion'],
     relatedIds: ['morgoth', 'sauron'],
   },
   {
-    id: 'scatha', slug: 'scatha', name: 'Scatha', race: 'dragons', peopleId: 'dragons', gender: 'Male',
+    id: 'scatha', slug: 'scatha', image: characterImages.scatha, name: 'Scatha', race: 'dragons', peopleId: 'dragons', gender: 'Male',
     summary: 'A long-worm dragon of the Grey Mountains slain by Fram of the Éothéod.',
     overview: 'Scatha is known chiefly through the quarrel over his hoard between Fram and the Dwarves, which became a lasting grievance.',
     continuity: 'supplementary', sourceIds: ['lotr', 'unfinished-tales'],
   },
   {
-    id: 'chrysophylax', slug: 'chrysophylax', name: 'Chrysophylax Dives', race: 'dragons', peopleId: 'dragons', gender: 'Male',
+    id: 'chrysophylax', slug: 'chrysophylax', image: characterImages.chrysophylax, name: 'Chrysophylax Dives', race: 'dragons', peopleId: 'dragons', gender: 'Male',
     summary: 'The dragon of Tolkien’s comic tale “Farmer Giles of Ham”.',
     overview: 'Chrysophylax belongs to Tolkien’s lighter, non-legendarium fiction; he is a pompous, blustering dragon rather than a mythic terror.',
     continuity: 'tolkien-texts', sourceIds: ['tom-bombadil'],

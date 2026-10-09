@@ -325,6 +325,7 @@ export const books: Book[] = [
   {
     id: 'the-hobbit-film-trilogy',
     slug: 'the-hobbit-film-trilogy',
+    image: '/bookimages/DesolationOfSmaug.jpg',
     name: 'The Hobbit (film trilogy)',
     summary:
       'Peter Jackson’s three-part film adaptation of The Hobbit — an invented expansion, not a Tolkien novel.',

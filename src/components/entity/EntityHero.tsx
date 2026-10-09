@@ -26,7 +26,7 @@ export default function EntityHero({
     <header className="border-b border-border bg-night-2/50">
       <div className="mx-auto max-w-7xl px-4 pb-10 pt-8">
         <Breadcrumbs items={crumbs} />
-        <div className="grid gap-8 md:grid-cols-[1fr_20rem]">
+        <div className={`grid gap-8 ${image ? 'md:grid-cols-[1fr_20rem]' : ''}`}>
           <div className="order-2 md:order-1">
             <p className="mb-2 font-display text-xs uppercase tracking-[0.3em] text-gold">{eyebrow}</p>
             <h1 className="font-display text-3xl leading-tight text-parchment md:text-5xl">{name}</h1>
@@ -53,11 +53,13 @@ export default function EntityHero({
             )}
           </div>
 
-          <div className="order-1 md:order-2">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-border bg-night-2">
-              <LoreImage src={image} alt={name} fill priority sizes="(max-width: 768px) 100vw, 320px" className="object-cover" />
+          {image && (
+            <div className="order-1 md:order-2">
+              <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-border bg-night-2">
+                <LoreImage src={image} alt={name} fill priority sizes="(max-width: 768px) 100vw, 320px" className="object-cover" />
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </header>

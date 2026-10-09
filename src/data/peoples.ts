@@ -1,4 +1,5 @@
 import type { People } from '@/types/content';
+import { characterImages, locationImages } from './images';
 
 /**
  * Peoples, cultures, kingdoms, realms, organizations and armies.
@@ -20,6 +21,7 @@ export const peoples: People[] = [
   {
     id: 'hobbits',
     slug: 'hobbits',
+    image: characterImages.frodo,
     name: 'Hobbits',
     aliases: ['Halflings', 'Periannath', 'Kuduk'],
     summary:
@@ -46,6 +48,7 @@ export const peoples: People[] = [
   {
     id: 'elves',
     slug: 'elves',
+    image: characterImages.galadriel,
     name: 'Elves',
     aliases: ['Quendi', 'Eldar', 'Firstborn'],
     summary:
@@ -72,6 +75,7 @@ export const peoples: People[] = [
   {
     id: 'dwarves',
     slug: 'dwarves',
+    image: characterImages.thorin,
     name: 'Dwarves',
     aliases: ['Khazâd', 'Naugrim', 'Durin’s Folk'],
     summary:
@@ -98,6 +102,7 @@ export const peoples: People[] = [
   {
     id: 'men',
     slug: 'men',
+    image: characterImages.aragorn,
     name: 'Men',
     aliases: ['Edain', 'Hildor', 'Secondborn', 'Aftercomers'],
     summary:
@@ -124,6 +129,7 @@ export const peoples: People[] = [
   {
     id: 'orcs',
     slug: 'orcs',
+    image: characterImages.azog,
     name: 'Orcs',
     aliases: ['Yrch', 'Goblins', 'Uruk-hai', 'Uruks'],
     summary:
@@ -176,6 +182,7 @@ export const peoples: People[] = [
   {
     id: 'istari',
     slug: 'istari',
+    image: characterImages.gandalf,
     name: 'Istari',
     aliases: ['Wizards', 'the Five Wizards', 'Heren Istarion'],
     summary:
@@ -202,6 +209,7 @@ export const peoples: People[] = [
   {
     id: 'dragons',
     slug: 'dragons',
+    image: characterImages.smaug,
     name: 'Dragons',
     aliases: ['Great Worms', 'Drakes', 'Urulóki'],
     summary:
@@ -232,6 +240,7 @@ export const peoples: People[] = [
   {
     id: 'noldor',
     slug: 'noldor',
+    image: characterImages.elrond,
     name: 'Noldor',
     aliases: ['Deep Elves', 'Golodhrim', 'Noldoli'],
     summary:
@@ -258,6 +267,7 @@ export const peoples: People[] = [
   {
     id: 'sindar',
     slug: 'sindar',
+    image: characterImages.celeborn,
     name: 'Sindar',
     aliases: ['Grey Elves', 'Grey-elves of Doriath'],
     summary:
@@ -284,6 +294,7 @@ export const peoples: People[] = [
   {
     id: 'silvan-elves',
     slug: 'silvan-elves',
+    image: characterImages.haldir,
     name: 'Silvan Elves',
     aliases: ['Wood-elves', 'Woodland Elves', 'Tawarwaith'],
     summary:
@@ -314,6 +325,7 @@ export const peoples: People[] = [
   {
     id: 'durins-folk',
     slug: 'durins-folk',
+    image: characterImages.durin,
     name: 'Durin’s Folk',
     aliases: ['Longbeards', 'Durin’s line', 'House of Durin'],
     summary:
@@ -344,6 +356,7 @@ export const peoples: People[] = [
   {
     id: 'dunedain',
     slug: 'dunedain',
+    image: characterImages.faramir,
     name: 'Dúnedain',
     aliases: ['Men of the West', 'Rangers of the North'],
     summary:
@@ -370,6 +383,7 @@ export const peoples: People[] = [
   {
     id: 'numenoreans',
     slug: 'numenoreans',
+    image: characterImages.denethor,
     name: 'Númenóreans',
     aliases: ['Men of Númenor', 'Kings of Men', 'Dúnedain of Númenor'],
     summary:
@@ -396,6 +410,7 @@ export const peoples: People[] = [
   {
     id: 'rohirrim',
     slug: 'rohirrim',
+    image: characterImages.theoden,
     name: 'Rohirrim',
     aliases: ['Horse-lords', 'Eorlingas', 'Men of Rohan'],
     summary:
@@ -422,6 +437,7 @@ export const peoples: People[] = [
   {
     id: 'bardings',
     slug: 'bardings',
+    image: locationImages.lakeTown,
     name: 'Bardings',
     aliases: ['Men of Dale', 'Men of the Lonely Mountain'],
     summary:
@@ -452,6 +468,7 @@ export const peoples: People[] = [
   {
     id: 'gondor',
     slug: 'gondor',
+    image: locationImages.minasTirith,
     name: 'Gondor',
     aliases: ['South-kingdom', 'Kingdom of the South', 'Reunited Kingdom (with Arnor)'],
     summary:
@@ -504,6 +521,7 @@ export const peoples: People[] = [
   {
     id: 'rohan',
     slug: 'rohan',
+    image: locationImages.edoras,
     name: 'Rohan',
     aliases: ['Riddermark', 'Calenardhon', 'Mark of the Riders'],
     summary:
@@ -530,6 +548,7 @@ export const peoples: People[] = [
   {
     id: 'erebor',
     slug: 'erebor',
+    image: locationImages.erebor,
     name: 'Erebor',
     aliases: ['Lonely Mountain', 'Kingdom under the Mountain'],
     summary:
@@ -556,6 +575,7 @@ export const peoples: People[] = [
   {
     id: 'lothlorien',
     slug: 'lothlorien',
+    image: locationImages.lothlorien,
     name: 'Lothlórien',
     aliases: ['Lórien', 'Lothlorien', 'Golden Wood', 'Dwimordene'],
     summary:
@@ -582,6 +602,7 @@ export const peoples: People[] = [
   {
     id: 'rivendell',
     slug: 'rivendell',
+    image: locationImages.rivendell,
     name: 'Rivendell',
     aliases: ['Imladris', 'The Last Homely House', 'The Last Homely House East of the Sea'],
     summary:
@@ -608,6 +629,7 @@ export const peoples: People[] = [
   {
     id: 'the-shire',
     slug: 'the-shire',
+    image: locationImages.theShire,
     name: 'The Shire',
     aliases: ['Sûza', 'The Four Farthings'],
     summary:
@@ -634,6 +656,7 @@ export const peoples: People[] = [
   {
     id: 'isengard',
     slug: 'isengard',
+    image: locationImages.isengard,
     name: 'Isengard',
     aliases: ['Nan Curunír', 'The Ring of Isengard', 'Angrenost'],
     summary:
@@ -660,6 +683,7 @@ export const peoples: People[] = [
   {
     id: 'mordor',
     slug: 'mordor',
+    image: locationImages.mordor,
     name: 'Mordor',
     aliases: ['The Black Land', 'Land of Shadow', 'Nurn'],
     summary:
@@ -716,6 +740,7 @@ export const peoples: People[] = [
   {
     id: 'the-white-council',
     slug: 'the-white-council',
+    image: characterImages.saruman,
     name: 'The White Council',
     aliases: ['Council of the Wise', 'The Wise'],
     summary:
@@ -742,6 +767,7 @@ export const peoples: People[] = [
   {
     id: 'the-nazgul',
     slug: 'the-nazgul',
+    image: characterImages.witchking,
     name: 'The Nazgûl',
     aliases: ['Ringwraiths', 'The Nine', 'Black Riders', 'Ulairi'],
     summary:
@@ -768,6 +794,7 @@ export const peoples: People[] = [
   {
     id: 'muster-of-rohan',
     slug: 'muster-of-rohan',
+    image: locationImages.pelennorFields,
     name: 'Muster of Rohan',
     aliases: ['The Riders of Rohan', 'The Rohirrim Muster', 'The Ride of the Rohirrim'],
     summary:
