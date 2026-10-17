@@ -3,49 +3,58 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import Link from 'next/link';
-import { Home, LocateFixed, Maximize, Minimize, Search, X, ZoomIn, ZoomOut } from 'lucide-react';
+import {
+  ChevronDown,
+  Home,
+  LocateFixed,
+  Maximize,
+  Minimize,
+  Search,
+  X,
+  ZoomIn,
+  ZoomOut,
+} from 'lucide-react';
 import type { Location } from '@/types/content';
-import { locations } from '@/data/locations';
 import { mapImages } from '@/data/images';
 import { hrefFor } from '@/lib/content';
 import LoreImage from '@/components/ui/LoreImage';
+import { useExperienceGuide } from '@/components/experience/ExperienceProvider';
+import {
+  atlasCategories,
+  atlasCategoryCounts,
+  atlasCategoryOf,
+  atlasCategoryOfLocation,
+  atlasOffMap,
+  atlasPlaceById,
+  atlasPlaces,
+  clusterMarkers,
+  groupByRegion,
+  isKeyPlace,
+  MAP_H,
+  MAP_W,
+  matchesAtlasQuery,
+  resolveMarkers,
+  type AtlasCategoryId,
+  type AtlasCluster,
+  type AtlasMarker,
+} from '@/lib/atlas';
+import LocationPanel from './LocationPanel';
 
 /* ------------------------------------------------------------------ */
 /* Constants                                                           */
 /* ------------------------------------------------------------------ */
 
-/** The stage is drawn at this fixed size and scaled by `transform`. */
-const MAP_W = 1000;
-const MAP_H = 1013; // source is 2370×2401, near square
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 8;
 const ZOOM_STEP = 1.25;
 const CENTER_ZOOM = 1.6;
 const FIT_PADDING = 24;
+/** Markers closer than this on screen are merged into a cluster. */
+const CLUSTER_SCREEN_PX = 32;
+/** Arrow-key pan distance, in screen pixels. */
+const KEY_PAN = 48;
 
-/** A location that can be placed on the map. */
-type LayeredLocation = Location & { coordinates: { x: number; y: number } };
-
-type LayerFilter = 'third-age' | 'second-age' | 'off-map';
-
-const layerOptions: { id: LayerFilter; label: string }[] = [
-  { id: 'third-age', label: 'Third Age' },
-  { id: 'second-age', label: 'Second Age' },
-  { id: 'off-map', label: 'Off-map' },
-];
-
-/**
- * Markers are drawn only for Third-Age places, which are the ones the image
- * can honestly hold. Númenor (Second Age) and Gondolin and Doriath (First
- * Age) carry coordinates too, but placing them on a Third-Age map would put
- * water where there is land and land where there is sea — so they are kept
- * as text entries in the "documented elsewhere" list.
- */
-const onMap = locations.filter(
-  (l): l is LayeredLocation => l.mapLayer === 'third-age' && l.coordinates !== undefined,
-);
-const offMap = locations.filter((l) => !(l.mapLayer === 'third-age' && l.coordinates !== undefined));
-const secondAge = offMap.filter((l) => l.mapLayer === 'second-age');
+type CategoryFilter = AtlasCategoryId | 'all';
 
 /* ------------------------------------------------------------------ */
 /* Small helpers                                                       */
@@ -62,8 +71,34 @@ function ageLabel(age?: string): string {
   return 'Earlier Ages';
 }
 
-function typeLabel(type: string): string {
-  return type.charAt(0).toUpperCase() + type.slice(1).replace(/-/g, ' ');
+/* ------------------------------------------------------------------ */
+/* Sub-components                                                      */
+/* ------------------------------------------------------------------ */
+
+function ControlButton({
+  icon: Icon,
+  label,
+  onClick,
+  pressed,
+}: {
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  label: string;
+  onClick: () => void;
+  pressed?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      aria-pressed={pressed}
+      className="flex h-9 w-9 items-center justify-center gap-2 rounded-md border border-border bg-night-2/90 px-2.5 text-parchment backdrop-blur transition-colors hover:border-gold/60 hover:text-gold md:w-auto"
+    >
+      <Icon size={16} aria-hidden />
+      <span className="hidden text-xs md:inline">{label}</span>
+    </button>
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -72,13 +107,16 @@ function typeLabel(type: string): string {
 
 export default function AtlasExplorer() {
   const viewportRef = useRef<HTMLDivElement>(null);
+  const { openGuide } = useExperienceGuide();
 
   const [zoom, setZoom] = useState(1);
   const [tx, setTx] = useState(0);
   const [ty, setTy] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
-  const [layerFilter, setLayerFilter] = useState<LayerFilter>('third-age');
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
+  const [keyOnly, setKeyOnly] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -114,7 +152,6 @@ export default function AtlasExplorer() {
     setTy(nextTy);
   }, []);
 
-  /** Keep at least part of the image inside the viewport. */
   const clampView = useCallback(
     (nextZoom: number, nextTx: number, nextTy: number, vw: number, vh: number) => {
       const sw = MAP_W * nextZoom;
@@ -128,7 +165,6 @@ export default function AtlasExplorer() {
     [],
   );
 
-  /** Fit the whole map, centred, with padding — the resting view. */
   const fitView = useCallback(() => {
     const el = viewportRef.current;
     if (!el) return;
@@ -141,11 +177,6 @@ export default function AtlasExplorer() {
     setView(fit, (width - MAP_W * fit) / 2, (height - MAP_H * fit) / 2);
   }, [setView]);
 
-  /**
-   * Zoom by `factor` keeping the map point under the cursor fixed.
-   * screen = T + zoom·P, so after changing zoom the translate must become
-   * T' = C − k·(C − T) with k = zoom'/zoom.
-   */
   const zoomAt = useCallback(
     (clientX: number, clientY: number, factor: number) => {
       const el = viewportRef.current;
@@ -178,24 +209,129 @@ export default function AtlasExplorer() {
     [zoomAt],
   );
 
-  /** Move the view so a marker sits at the centre of the viewport. */
-  const centerOnMarker = useCallback(
-    (loc: LayeredLocation) => {
+  /** Move the view so a point (in image percent) sits at the centre. */
+  const centerOn = useCallback(
+    (xPercent: number, yPercent: number, targetZoom: number) => {
       const el = viewportRef.current;
       if (!el) return;
       const rect = el.getBoundingClientRect();
-      const nextZoom = clamp(CENTER_ZOOM, MIN_ZOOM, MAX_ZOOM);
-      const px = (loc.coordinates.x / 100) * MAP_W;
-      const py = (loc.coordinates.y / 100) * MAP_H;
-      setView(nextZoom, rect.width / 2 - px * nextZoom, rect.height / 2 - py * nextZoom);
+      const z = clamp(targetZoom, MIN_ZOOM, MAX_ZOOM);
+      const px = (xPercent / 100) * MAP_W;
+      const py = (yPercent / 100) * MAP_H;
+      const clamped = clampView(z, rect.width / 2 - px * z, rect.height / 2 - py * z, rect.width, rect.height);
+      setView(clamped.zoom, clamped.tx, clamped.ty);
     },
-    [setView],
+    [clampView, setView],
+  );
+
+  const panBy = useCallback(
+    (dx: number, dy: number) => {
+      const el = viewportRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const v = viewRef.current;
+      const clamped = clampView(v.zoom, v.tx + dx, v.ty + dy, rect.width, rect.height);
+      setView(clamped.zoom, clamped.tx, clamped.ty);
+    },
+    [clampView, setView],
+  );
+
+  /* ----------------------------- derived data --------------------- */
+
+  const markers = useMemo(() => resolveMarkers(atlasPlaces), []);
+  const markerById = useMemo(() => new Map(markers.map((m) => [m.location.id, m])), [markers]);
+  const categoryCounts = useMemo(() => atlasCategoryCounts(atlasPlaces), []);
+
+  const selected = useMemo(
+    () => (selectedId ? atlasPlaceById.get(selectedId) ?? null : null),
+    [selectedId],
+  );
+
+  const querying = query.trim().length > 0;
+
+  const passesFilters = useCallback(
+    (location: Location) => {
+      if (categoryFilter !== 'all' && atlasCategoryOf(location.type) !== categoryFilter) return false;
+      if (keyOnly && !isKeyPlace(location)) return false;
+      return true;
+    },
+    [categoryFilter, keyOnly],
+  );
+
+  const filteredMarkers = useMemo(
+    () => markers.filter((m) => passesFilters(m.location)),
+    [markers, passesFilters],
+  );
+
+  const matchedIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const m of filteredMarkers) {
+      if (matchesAtlasQuery(m.location, query)) set.add(m.location.id);
+    }
+    return set;
+  }, [filteredMarkers, query]);
+
+  const clusters = useMemo(
+    () => clusterMarkers(filteredMarkers, zoom, CLUSTER_SCREEN_PX),
+    [filteredMarkers, zoom],
+  );
+
+  const listPlaces = useMemo(
+    () => filteredMarkers.filter((m) => matchedIds.has(m.location.id)).map((m) => m.location),
+    [filteredMarkers, matchedIds],
+  );
+
+  const groups = useMemo(() => groupByRegion(listPlaces), [listPlaces]);
+
+  const offMapMatched = useMemo(
+    () => atlasOffMap.filter((l) => matchesAtlasQuery(l, query)),
+    [query],
+  );
+
+  const totalShown = listPlaces.length;
+
+  /* ----------------------------- actions -------------------------- */
+
+  const focusPlace = useCallback(
+    (location: Location) => {
+      setSelectedId(location.id);
+      setPanelOpen(true);
+      const marker = markerById.get(location.id);
+      const x = marker?.x ?? location.coordinates?.x;
+      const y = marker?.y ?? location.coordinates?.y;
+      if (x !== undefined && y !== undefined) {
+        centerOn(x, y, Math.max(viewRef.current.zoom, CENTER_ZOOM));
+      }
+    },
+    [centerOn, markerById],
+  );
+
+  const selectMarker = useCallback(
+    (marker: AtlasMarker) => {
+      setSelectedId(marker.location.id);
+      setPanelOpen(true);
+      centerOn(marker.x, marker.y, viewRef.current.zoom);
+    },
+    [centerOn],
+  );
+
+  const handleCluster = useCallback(
+    (cluster: AtlasCluster) => {
+      const next = viewRef.current.zoom * 1.9;
+      if (next > MAX_ZOOM * 0.98) {
+        // Cannot separate any further — open the first place instead.
+        const first = cluster.markers[0];
+        if (first) selectMarker(first);
+        return;
+      }
+      setSelectedId(null);
+      centerOn(cluster.x, cluster.y, next);
+    },
+    [centerOn, selectMarker],
   );
 
   /* ----------------------------- effects -------------------------- */
 
-  // Initial fit, and re-fit whenever the viewport changes size (resize,
-  // fullscreen, mobile URL-bar collapse).
   useEffect(() => {
     const el = viewportRef.current;
     if (!el) return;
@@ -205,7 +341,6 @@ export default function AtlasExplorer() {
     return () => ro.disconnect();
   }, [fitView]);
 
-  // Wheel zoom needs a non-passive listener so preventDefault works.
   useEffect(() => {
     const el = viewportRef.current;
     if (!el) return;
@@ -223,7 +358,6 @@ export default function AtlasExplorer() {
     return () => document.removeEventListener('fullscreenchange', onChange);
   }, []);
 
-  // Escape clears the selection.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setSelectedId(null);
@@ -236,8 +370,7 @@ export default function AtlasExplorer() {
 
   const handlePointerDown = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
-    // Leave buttons (markers, zoom controls, panel links) to themselves.
-    if ((e.target as HTMLElement).closest('button')) return;
+    if ((e.target as HTMLElement).closest('button, a, input, summary, details')) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     const v = viewRef.current;
@@ -274,8 +407,6 @@ export default function AtlasExplorer() {
       const pts = [...pointersRef.current.values()];
 
       if (pinchRef.current && pts.length === 2) {
-        // Two-finger pinch: scale about the moving midpoint, keeping the
-        // map point that was under the start midpoint under the current one.
         const [a, b] = pts;
         const dist = Math.hypot(b.x - a.x, b.y - a.y);
         const midX = (a.x + b.x) / 2;
@@ -325,7 +456,13 @@ export default function AtlasExplorer() {
       if (remaining.length === 1) {
         const [id, pos] = remaining[0];
         const v = viewRef.current;
-        dragRef.current = { pointerId: id, startX: pos.x, startY: pos.y, startTx: v.tx, startTy: v.ty };
+        dragRef.current = {
+          pointerId: id,
+          startX: pos.x,
+          startY: pos.y,
+          startTx: v.tx,
+          startTy: v.ty,
+        };
         setIsDragging(true);
       } else {
         setIsDragging(false);
@@ -349,75 +486,110 @@ export default function AtlasExplorer() {
     }
   }, []);
 
-  /* --------------------------- derived data ------------------------ */
-
-  const selected = useMemo(
-    () => onMap.find((l) => l.id === selectedId) ?? null,
-    [selectedId],
-  );
-
-  const matches = useCallback(
-    (l: Location) => {
-      const q = query.trim().toLowerCase();
-      if (!q) return true;
-      return [l.name, ...(l.aliases ?? []), l.region ?? '', l.type, l.summary]
-        .join(' ')
-        .toLowerCase()
-        .includes(q);
+  const handleViewportKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      switch (e.key) {
+        case 'ArrowLeft':
+          e.preventDefault();
+          panBy(KEY_PAN, 0);
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          panBy(-KEY_PAN, 0);
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          panBy(0, KEY_PAN);
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          panBy(0, -KEY_PAN);
+          break;
+        case '+':
+        case '=':
+          e.preventDefault();
+          zoomBy(ZOOM_STEP);
+          break;
+        case '-':
+        case '_':
+          e.preventDefault();
+          zoomBy(1 / ZOOM_STEP);
+          break;
+        case '0':
+          e.preventDefault();
+          fitView();
+          break;
+        default:
+          break;
+      }
     },
-    [query],
+    [fitView, panBy, zoomBy],
   );
 
-  const filteredOnMap = useMemo(() => onMap.filter(matches), [matches]);
-  const filteredOffMap = useMemo(() => offMap.filter(matches), [matches]);
-  const filteredSecondAge = useMemo(() => secondAge.filter(matches), [matches]);
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const first = listPlaces[0];
+      if (first) focusPlace(first);
+    }
+  };
 
-  const focusAndCenter = useCallback(
-    (loc: LayeredLocation) => {
-      setSelectedId(loc.id);
-      centerOnMarker(loc);
-    },
-    [centerOnMarker],
-  );
+  const clearFilters = () => {
+    setQuery('');
+    setCategoryFilter('all');
+    setKeyOnly(false);
+  };
+
+  const hasActiveFilters = querying || categoryFilter !== 'all' || keyOnly;
 
   /* ----------------------------- render ---------------------------- */
 
   return (
     <div className="panel overflow-hidden">
-      {/* Toolbar: legend note-chips per layer + hint */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border px-4 py-3">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-mist">
-          <span className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-gold" aria-hidden />
-            Third Age on the map · {onMap.length}
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-bronze" aria-hidden />
-            Second Age · {secondAge.length} off-map
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-mist" aria-hidden />
-            First Age · {offMap.length - secondAge.length} off-map
-          </span>
+      {/* Toolbar: legend + hint + guide */}
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-border px-4 py-3">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-mist">
+          {atlasCategories.map((c) => (
+            <span key={c.id} className="flex items-center gap-1.5">
+              <span aria-hidden className={`text-sm ${c.tone}`}>
+                {c.glyph}
+              </span>
+              {c.label}
+              <span className="text-mist/70">· {categoryCounts[c.id]}</span>
+            </span>
+          ))}
         </div>
-        <p className="ml-auto hidden text-xs text-mist sm:block">Drag to pan · Scroll to zoom</p>
+        <div className="ml-auto flex items-center gap-3">
+          <p className="hidden text-xs text-mist xl:block">
+            Drag to pan · scroll or pinch to zoom. Marker size carries no meaning.
+          </p>
+          <button
+            type="button"
+            onClick={openGuide}
+            className="rounded-full border border-border px-3 py-1 text-xs text-parchment-2 transition-colors hover:border-gold hover:text-gold-light"
+          >
+            How to explore
+          </button>
+        </div>
       </div>
 
-      <div className="grid lg:grid-cols-[minmax(0,1fr)_21rem]">
-        {/* Map viewport */}
+      <div className="grid lg:grid-cols-[minmax(0,1fr)_22rem]">
+        {/* ----------------------------- Map ----------------------------- */}
         <div
           ref={viewportRef}
           role="application"
-          aria-label="Interactive map of Middle-earth, drag to pan, use buttons to zoom"
-          className={`relative aspect-square min-h-[56vh] w-full touch-none select-none overflow-hidden bg-night-2 ${
-            isDragging ? 'cursor-grabbing' : 'cursor-grab'
-          } ${isFullscreen ? 'aspect-auto h-full' : 'lg:aspect-auto lg:h-[70vh]'}`}
+          tabIndex={0}
+          aria-label="Interactive map of Middle-earth. Use arrow keys to pan, plus and minus to zoom, and 0 to reset. Drag to pan."
+          onKeyDown={handleViewportKeyDown}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={endPointer}
           onPointerCancel={endPointer}
+          className={`relative aspect-square min-h-[58vh] w-full touch-none select-none overflow-hidden bg-night-2 outline-none focus-visible:ring-2 focus-visible:ring-gold-light ${
+            isDragging ? 'cursor-grabbing' : 'cursor-grab'
+          } ${isFullscreen ? 'aspect-auto h-full' : 'lg:aspect-auto lg:h-[72vh]'}`}
         >
-          {/* Stage: fixed-size map scaled and translated as a unit */}
+          {/* Stage */}
           <div
             className="absolute left-0 top-0"
             style={{
@@ -437,332 +609,348 @@ export default function AtlasExplorer() {
               className="block h-auto w-full"
             />
 
-            {onMap.map((loc) => {
+            {clusters.map((cluster) => {
+              if (cluster.markers.length > 1) {
+                const containsMatch =
+                  !querying || cluster.markers.some((m) => matchedIds.has(m.location.id));
+                const dimmed = querying && !containsMatch;
+                return (
+                  <button
+                    key={`cluster-${cluster.id}`}
+                    type="button"
+                    className="map-marker group absolute z-10 outline-none"
+                    style={{ left: `${cluster.x}%`, top: `${cluster.y}%`, width: 0, height: 0 }}
+                    aria-label={`${cluster.markers.length} places grouped here. Activate to zoom in.`}
+                    onClick={() => handleCluster(cluster)}
+                  >
+                    <span
+                      className="relative block"
+                      style={{
+                        transform: `translate(-50%, -50%) scale(${1 / zoom})`,
+                        transformOrigin: 'center center',
+                      }}
+                    >
+                      <span
+                        className={`flex h-7 w-7 items-center justify-center rounded-full border-2 border-gold bg-night text-[11px] font-display text-gold-light shadow-lg transition-transform group-hover:scale-110 group-focus-visible:ring-2 group-focus-visible:ring-gold-light ${
+                          dimmed ? 'opacity-40' : ''
+                        }`}
+                      >
+                        {cluster.markers.length}
+                      </span>
+                    </span>
+                  </button>
+                );
+              }
+
+              const marker = cluster.markers[0];
+              const loc = marker.location;
+              const category = atlasCategoryOfLocation(loc);
               const isSelected = selectedId === loc.id;
+              const isMatch = matchedIds.has(loc.id);
+              const dimmed = querying && !isMatch;
+              const showLabel = isSelected || (querying && isMatch);
+
               return (
                 <button
                   key={loc.id}
                   type="button"
-                  className="map-marker group absolute -translate-x-1/2 -translate-y-1/2"
-                  style={{
-                    left: `${loc.coordinates.x}%`,
-                    top: `${loc.coordinates.y}%`,
-                  }}
-                  aria-label={`${loc.name}, ${loc.region ?? loc.type}`}
+                  className="map-marker group absolute z-10 outline-none"
+                  style={{ left: `${marker.x}%`, top: `${marker.y}%`, width: 0, height: 0 }}
+                  aria-label={`${loc.name}, ${category.singular}${loc.region ? `, ${loc.region}` : ''}`}
                   aria-pressed={isSelected}
-                  onClick={() => setSelectedId(loc.id)}
-                  onFocus={() => setSelectedId(loc.id)}
+                  onClick={() => selectMarker(marker)}
+                  onFocus={() => selectMarker(marker)}
                 >
                   <span
-                    className={`block rounded-full bg-gold ring-gold-light ${
-                      isSelected
-                        ? 'h-3.5 w-3.5 shadow-[0_0_0_4px_rgba(200,162,74,0.3)] ring-2'
-                        : 'h-2.5 w-2.5 ring-2 ring-gold-light/60 transition-[width,height,opacity] group-hover:scale-125'
-                    }`}
-                  />
-                  <span
-                    className={`pointer-events-none absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap rounded border border-border bg-night-2/95 px-1.5 py-0.5 font-display text-[10px] tracking-wide text-parchment shadow-md transition-opacity ${
-                      isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                    }`}
+                    className="relative block"
+                    style={{
+                      transform: `translate(-50%, -50%) scale(${1 / zoom})`,
+                      transformOrigin: 'center center',
+                    }}
                   >
-                    {loc.name}
+                    <span
+                      className={`flex h-6 w-6 items-center justify-center rounded-full border text-[12px] leading-none shadow-md transition-transform group-hover:scale-125 ${category.tone} ${
+                        isSelected
+                          ? 'border-gold-light bg-gold/30 ring-2 ring-gold-light'
+                          : 'border-border bg-night-2/95'
+                      } ${!isSelected && querying && isMatch ? 'ring-2 ring-gold/70' : ''} ${
+                        dimmed ? 'opacity-30' : ''
+                      } group-focus-visible:ring-2 group-focus-visible:ring-gold-light`}
+                    >
+                      {category.glyph}
+                    </span>
+                    <span
+                      className={`pointer-events-none absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap rounded border border-border bg-night-2/95 px-1.5 py-0.5 font-display text-[10px] tracking-wide text-parchment shadow-md transition-opacity ${
+                        showLabel ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100'
+                      }`}
+                    >
+                      {loc.name}
+                    </span>
                   </span>
                 </button>
               );
             })}
           </div>
 
-          {/* Zoom controls overlay */}
+          {/* Map controls */}
           <div
-            className="absolute right-3 top-3 z-20 flex flex-col gap-1.5"
+            className="absolute right-3 top-3 z-20 flex flex-col items-end gap-1.5"
             onPointerDown={(e) => e.stopPropagation()}
+            role="group"
+            aria-label="Map controls"
           >
-            <button
-              type="button"
-              onClick={() => zoomBy(ZOOM_STEP)}
-              aria-label="Zoom in"
-              className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-night-2/90 text-parchment backdrop-blur transition-colors hover:border-gold/60 hover:text-gold"
-            >
-              <ZoomIn size={16} aria-hidden />
-            </button>
-            <button
-              type="button"
-              onClick={() => zoomBy(1 / ZOOM_STEP)}
-              aria-label="Zoom out"
-              className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-night-2/90 text-parchment backdrop-blur transition-colors hover:border-gold/60 hover:text-gold"
-            >
-              <ZoomOut size={16} aria-hidden />
-            </button>
-            <button
-              type="button"
-              onClick={fitView}
-              aria-label="Reset view"
-              className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-night-2/90 text-parchment backdrop-blur transition-colors hover:border-gold/60 hover:text-gold"
-            >
-              <Home size={16} aria-hidden />
-            </button>
-            <button
-              type="button"
+            <ControlButton icon={ZoomIn} label="Zoom in" onClick={() => zoomBy(ZOOM_STEP)} />
+            <ControlButton icon={ZoomOut} label="Zoom out" onClick={() => zoomBy(1 / ZOOM_STEP)} />
+            <ControlButton icon={Home} label="Reset view" onClick={fitView} />
+            <ControlButton
+              icon={isFullscreen ? Minimize : Maximize}
+              label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
               onClick={toggleFullscreen}
-              aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-              className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-night-2/90 text-parchment backdrop-blur transition-colors hover:border-gold/60 hover:text-gold"
-            >
-              {isFullscreen ? <Minimize size={16} aria-hidden /> : <Maximize size={16} aria-hidden />}
-            </button>
+              pressed={isFullscreen}
+            />
           </div>
 
-          {/* Selected-place info panel */}
-          {selected && (
-            <div
-              className="panel-soft absolute bottom-3 left-3 right-3 z-20 max-w-sm p-4 sm:right-auto"
-              role="status"
-              aria-live="polite"
-              onPointerDown={(e) => e.stopPropagation()}
-            >
-              <button
-                type="button"
-                onClick={() => setSelectedId(null)}
-                aria-label="Close details"
-                className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded text-mist transition-colors hover:text-parchment"
-              >
-                <X size={14} aria-hidden />
-              </button>
-              <p className="pr-6 font-display text-base text-parchment">{selected.name}</p>
-              <p className="mt-1 flex flex-wrap gap-1.5 text-[11px]">
-                <span className="rounded-full border border-gold/40 bg-gold/10 px-2 py-0.5 text-gold-light">
-                  {typeLabel(selected.type)}
-                </span>
-                {selected.region && (
-                  <span className="rounded-full border border-border bg-night-2/60 px-2 py-0.5 text-parchment-2">
-                    {selected.region}
-                  </span>
-                )}
-                <span className="rounded-full border border-border bg-night-2/60 px-2 py-0.5 text-mist">
-                  {ageLabel(selected.age)}
-                </span>
-              </p>
-              <p className="mt-2 text-sm leading-relaxed text-parchment-2">{selected.summary}</p>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <Link
-                  href={hrefFor('location', selected.slug)}
-                  className="rounded-md bg-gold/15 px-3 py-1.5 text-xs font-medium text-gold-light transition-colors hover:bg-gold/25"
-                >
-                  Open entry →
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => centerOnMarker(selected)}
-                  className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs text-parchment-2 transition-colors hover:border-gold/60 hover:text-gold"
-                >
-                  <LocateFixed size={12} aria-hidden />
-                  Center on map
-                </button>
-              </div>
-              <p className="mt-3 border-t border-border/60 pt-2 text-[11px] text-mist">
-                {filteredOnMap.length} of {onMap.length} places shown · {offMap.length} earlier
-                places documented elsewhere
-              </p>
-            </div>
-          )}
+          {/* Accessible view status */}
+          <p className="sr-only" aria-live="polite">
+            {querying
+              ? `${totalShown} ${totalShown === 1 ? 'place matches' : 'places match'} your search.`
+              : `${totalShown} places shown on the map.`}
+          </p>
         </div>
 
-        {/* Sidebar: search + layer chips + results */}
-        <aside className="flex flex-col border-t border-border lg:border-l lg:border-t-0 lg:max-h-[70vh]">
-          <div className="space-y-3 border-b border-border p-4">
-            <div className="relative">
-              <Search
-                size={14}
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-mist"
-                aria-hidden
-              />
-              <input
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search places, regions, aliases…"
-                aria-label="Search places in the atlas"
-                className="w-full rounded-md border border-border bg-night-2/70 py-2 pl-9 pr-9 text-sm text-parchment placeholder:text-mist focus:border-gold/60 focus:outline-none"
-              />
-              {query && (
-                <button
-                  type="button"
-                  onClick={() => setQuery('')}
-                  aria-label="Clear search"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded text-mist transition-colors hover:text-parchment"
-                >
-                  <X size={12} aria-hidden />
-                </button>
-              )}
-            </div>
-            <div role="group" aria-label="Filter places by Age" className="flex flex-wrap gap-2">
-              {layerOptions.map((opt) => {
-                const active = layerFilter === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setLayerFilter(opt.id)}
-                    aria-pressed={active}
-                    className={`rounded-full border px-3 py-1 text-xs transition-colors ${
-                      active
-                        ? 'border-gold/70 bg-gold/15 text-gold-light'
-                        : 'border-border bg-night-2/60 text-mist hover:text-parchment'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+        {/* --------------------------- Sidebar --------------------------- */}
+        <aside className="flex flex-col border-t border-border lg:max-h-[72vh] lg:border-l lg:border-t-0">
+          {/* Mobile panel toggle */}
+          <button
+            type="button"
+            onClick={() => setPanelOpen((v) => !v)}
+            aria-expanded={panelOpen}
+            aria-controls="atlas-sidebar"
+            className="flex items-center justify-between gap-2 px-4 py-3 text-left lg:hidden"
+          >
+            <span className="font-display text-xs uppercase tracking-[0.2em] text-gold">
+              {selected ? selected.name : `Places · ${totalShown}`}
+            </span>
+            <span className="inline-flex items-center gap-1 text-xs text-mist">
+              {panelOpen ? 'Hide' : 'Browse places'}
+              <ChevronDown size={14} aria-hidden className={`transition-transform ${panelOpen ? 'rotate-180' : ''}`} />
+            </span>
+          </button>
 
-          <div className="max-h-80 flex-1 overflow-y-auto p-4 lg:max-h-none">
-            {layerFilter === 'third-age' && (
+          <div
+            id="atlas-sidebar"
+            className={`min-h-0 flex-1 flex-col ${panelOpen ? 'flex' : 'hidden'} max-h-[65vh] lg:flex lg:max-h-none`}
+          >
+            {selected ? (
+              <LocationPanel
+                location={selected}
+                onClose={() => setSelectedId(null)}
+                onSelectOnMap={(loc) => focusPlace(loc)}
+                onCenter={() => {
+                  const m = markerById.get(selected.id);
+                  if (m) centerOn(m.x, m.y, Math.max(viewRef.current.zoom, CENTER_ZOOM));
+                }}
+              />
+            ) : (
               <>
-                <h3 className="font-display text-xs uppercase tracking-[0.2em] text-gold">
-                  Places on the map · {filteredOnMap.length}
-                </h3>
-                {filteredOnMap.length === 0 ? (
-                  <p className="mt-3 text-sm text-mist">No places match your search.</p>
-                ) : (
-                  <ul className="mt-2 space-y-1">
-                    {filteredOnMap.map((loc) => {
-                      const isSelected = selectedId === loc.id;
+                {/* Search + filters */}
+                <div className="space-y-3 border-b border-border p-4">
+                  <div className="relative">
+                    <Search
+                      size={14}
+                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-mist"
+                      aria-hidden
+                    />
+                    <input
+                      type="search"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      onKeyDown={handleSearchKeyDown}
+                      placeholder="Search places, regions, aliases…"
+                      aria-label="Search places in the atlas"
+                      className="w-full rounded-md border border-border bg-night-2/70 py-2 pl-9 pr-9 text-sm text-parchment placeholder:text-mist focus:border-gold/60 focus:outline-none"
+                    />
+                    {query && (
+                      <button
+                        type="button"
+                        onClick={() => setQuery('')}
+                        aria-label="Clear search"
+                        className="absolute right-2 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded text-mist transition-colors hover:text-parchment"
+                      >
+                        <X size={12} aria-hidden />
+                      </button>
+                    )}
+                  </div>
+
+                  <div role="group" aria-label="Filter by kind of place" className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCategoryFilter('all')}
+                      aria-pressed={categoryFilter === 'all'}
+                      className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                        categoryFilter === 'all'
+                          ? 'border-gold/70 bg-gold/15 text-gold-light'
+                          : 'border-border bg-night-2/60 text-mist hover:text-parchment'
+                      }`}
+                    >
+                      All kinds
+                    </button>
+                    {atlasCategories.map((c) => {
+                      const active = categoryFilter === c.id;
                       return (
-                        <li key={loc.id}>
-                          <button
-                            type="button"
-                            onClick={() => focusAndCenter(loc)}
-                            aria-pressed={isSelected}
-                            className={`flex w-full items-center gap-2 rounded-md border px-3 py-2 text-left transition-colors ${
-                              isSelected
-                                ? 'border-gold/50 bg-gold/10'
-                                : 'border-transparent hover:border-border hover:bg-night-2/50'
-                            }`}
-                          >
-                            <span className="min-w-0 flex-1">
-                              <span
-                                className={`block truncate text-sm ${isSelected ? 'text-gold-light' : 'text-parchment'}`}
-                              >
-                                {loc.name}
-                              </span>
-                              <span className="block truncate text-xs text-mist">
-                                {loc.region ?? typeLabel(loc.type)}
-                              </span>
-                            </span>
-                            <LocateFixed
-                              size={14}
-                              aria-hidden
-                              className={isSelected ? 'text-gold' : 'text-mist'}
-                            />
-                          </button>
-                        </li>
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => setCategoryFilter(active ? 'all' : c.id)}
+                          aria-pressed={active}
+                          className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors ${
+                            active
+                              ? 'border-gold/70 bg-gold/15 text-gold-light'
+                              : 'border-border bg-night-2/60 text-mist hover:text-parchment'
+                          }`}
+                        >
+                          <span aria-hidden>{c.glyph}</span>
+                          {c.label}
+                        </button>
                       );
                     })}
-                  </ul>
-                )}
-
-                <div className="mt-5 border-t border-border pt-4">
-                  <h4 className="font-display text-xs uppercase tracking-[0.2em] text-gold">
-                    Documented elsewhere · {offMap.length}
-                  </h4>
-                  <p className="mt-1 text-xs leading-relaxed text-mist">
-                    Places of the First and Second Ages cannot sit on a Third-Age map; they are kept
-                    as text entries in the archive.
-                  </p>
-                  <ul className="mt-2 space-y-1">
-                    {offMap.map((loc) => (
-                      <li key={loc.id}>
-                        <Link
-                          href={hrefFor('location', loc.slug)}
-                          className="flex items-center gap-2 rounded-md border border-transparent px-3 py-2 transition-colors hover:border-border hover:bg-night-2/50"
-                        >
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm text-parchment">{loc.name}</span>
-                            <span className="block truncate text-xs text-mist">
-                              {loc.region ?? typeLabel(loc.type)}
-                            </span>
-                          </span>
-                          <span className="rounded-full border border-border bg-night-2/60 px-2 py-0.5 text-[10px] text-mist">
-                            {ageLabel(loc.age)}
-                          </span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
+                    <button
+                      type="button"
+                      onClick={() => setKeyOnly((v) => !v)}
+                      aria-pressed={keyOnly}
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors ${
+                        keyOnly
+                          ? 'border-gold/70 bg-gold/15 text-gold-light'
+                          : 'border-border bg-night-2/60 text-mist hover:text-parchment'
+                      }`}
+                    >
+                      <span aria-hidden>✦</span>
+                      Important places
+                    </button>
+                  </div>
                 </div>
-              </>
-            )}
 
-            {layerFilter === 'second-age' && (
-              <>
-                <h3 className="font-display text-xs uppercase tracking-[0.2em] text-gold">
-                  Second Age · {filteredSecondAge.length}
-                </h3>
-                <p className="mt-2 text-xs leading-relaxed text-mist">
-                  Second-Age places belong to a geography the Third-Age map cannot show — Númenor
-                  sank beneath the Sea at the Downfall. They are documented as text entries.
-                </p>
-                {filteredSecondAge.length === 0 ? (
-                  <p className="mt-3 text-sm text-mist">No places match your search.</p>
-                ) : (
-                  <ul className="mt-2 space-y-1">
-                    {filteredSecondAge.map((loc) => (
-                      <li key={loc.id}>
-                        <Link
-                          href={hrefFor('location', loc.slug)}
-                          className="flex items-center gap-2 rounded-md border border-transparent px-3 py-2 transition-colors hover:border-border hover:bg-night-2/50"
-                        >
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm text-parchment">{loc.name}</span>
-                            <span className="block truncate text-xs text-mist">
-                              {loc.region ?? typeLabel(loc.type)}
-                            </span>
-                          </span>
-                          <span className="rounded-full border border-border bg-night-2/60 px-2 py-0.5 text-[10px] text-mist">
-                            {ageLabel(loc.age)}
-                          </span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </>
-            )}
+                {/* Results */}
+                <div className="min-h-0 flex-1 overflow-y-auto p-4">
+                  <p className="text-xs text-mist" aria-live="polite">
+                    {totalShown} {totalShown === 1 ? 'place' : 'places'}
+                    {hasActiveFilters ? ' match your filters' : ''}
+                  </p>
 
-            {layerFilter === 'off-map' && (
-              <>
-                <h3 className="font-display text-xs uppercase tracking-[0.2em] text-gold">
-                  Off-map places · {filteredOffMap.length}
-                </h3>
-                <p className="mt-2 text-xs leading-relaxed text-mist">
-                  Beleriand was drowned at the end of the First Age and Númenor sank in the Second,
-                  so these places are documented as text entries rather than markers.
-                </p>
-                {filteredOffMap.length === 0 ? (
-                  <p className="mt-3 text-sm text-mist">No places match your search.</p>
-                ) : (
-                  <ul className="mt-2 space-y-1">
-                    {filteredOffMap.map((loc) => (
-                      <li key={loc.id}>
-                        <Link
-                          href={hrefFor('location', loc.slug)}
-                          className="flex items-center gap-2 rounded-md border border-transparent px-3 py-2 transition-colors hover:border-border hover:bg-night-2/50"
+                  {totalShown === 0 ? (
+                    <div className="mt-4 rounded-lg border border-border/70 bg-night-2/40 px-4 py-6 text-center">
+                      <p className="text-sm text-parchment-2">No places match your search.</p>
+                      <p className="mt-1 text-xs text-mist">
+                        Try another spelling or alternate name, or clear the filters.
+                      </p>
+                      {hasActiveFilters && (
+                        <button
+                          type="button"
+                          onClick={clearFilters}
+                          className="mt-4 rounded-full border border-border px-3 py-1.5 text-xs text-parchment-2 transition-colors hover:border-gold hover:text-gold-light"
                         >
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm text-parchment">{loc.name}</span>
-                            <span className="block truncate text-xs text-mist">
-                              {loc.region ?? typeLabel(loc.type)}
+                          Clear filters
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="mt-3 space-y-4">
+                      {groups.map((group) => (
+                        <details key={group.region} open className="group">
+                          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 py-1">
+                            <span className="font-display text-xs uppercase tracking-[0.2em] text-gold">
+                              {group.region}
                             </span>
-                          </span>
-                          <span className="rounded-full border border-border bg-night-2/60 px-2 py-0.5 text-[10px] text-mist">
-                            {ageLabel(loc.age)}
-                          </span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                            <span className="flex items-center gap-1 text-[11px] text-mist">
+                              {group.places.length}
+                              <ChevronDown size={12} aria-hidden className="transition-transform group-open:rotate-180" />
+                            </span>
+                          </summary>
+                          <ul className="mt-1 space-y-0.5">
+                            {group.places.map((loc) => {
+                              const category = atlasCategoryOfLocation(loc);
+                              const isSelected = selectedId === loc.id;
+                              return (
+                                <li key={loc.id}>
+                                  <button
+                                    type="button"
+                                    onClick={() => focusPlace(loc)}
+                                    aria-pressed={isSelected}
+                                    className={`flex w-full items-center gap-2.5 rounded-md border px-2.5 py-2 text-left transition-colors ${
+                                      isSelected
+                                        ? 'border-gold/50 bg-gold/10'
+                                        : 'border-transparent hover:border-border hover:bg-night-2/50'
+                                    }`}
+                                  >
+                                    <span aria-hidden className={category.tone}>
+                                      {category.glyph}
+                                    </span>
+                                    <span className="min-w-0 flex-1">
+                                      <span
+                                        className={`block truncate text-sm ${
+                                          isSelected ? 'text-gold-light' : 'text-parchment'
+                                        }`}
+                                      >
+                                        {loc.name}
+                                      </span>
+                                      {loc.region && (
+                                        <span className="block truncate text-xs text-mist">{loc.region}</span>
+                                      )}
+                                    </span>
+                                    <LocateFixed
+                                      size={13}
+                                      aria-hidden
+                                      className={isSelected ? 'text-gold' : 'text-mist/70'}
+                                    />
+                                  </button>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </details>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Documented elsewhere */}
+                  {offMapMatched.length > 0 && (
+                    <details className="group mt-6 border-t border-border pt-4">
+                      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 py-1">
+                        <span className="font-display text-xs uppercase tracking-[0.2em] text-gold">
+                          Documented elsewhere
+                        </span>
+                        <span className="flex items-center gap-1 text-[11px] text-mist">
+                          {offMapMatched.length}
+                          <ChevronDown size={12} aria-hidden className="transition-transform group-open:rotate-180" />
+                        </span>
+                      </summary>
+                      <p className="mt-2 text-xs leading-relaxed text-mist">
+                        Places of the First and Second Ages cannot sit on a Third-Age map; they are
+                        kept as text entries in the archive.
+                      </p>
+                      <ul className="mt-2 space-y-0.5">
+                        {offMapMatched.map((loc) => (
+                          <li key={loc.id}>
+                            <Link
+                              href={hrefFor('location', loc.slug)}
+                              className="flex items-center gap-2.5 rounded-md border border-transparent px-2.5 py-2 transition-colors hover:border-border hover:bg-night-2/50"
+                            >
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-sm text-parchment">{loc.name}</span>
+                                {loc.region && (
+                                  <span className="block truncate text-xs text-mist">{loc.region}</span>
+                                )}
+                              </span>
+                              <span className="rounded-full border border-border bg-night-2/60 px-2 py-0.5 text-[10px] text-mist">
+                                {ageLabel(loc.age)}
+                              </span>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
+                </div>
               </>
             )}
           </div>

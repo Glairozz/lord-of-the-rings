@@ -4,6 +4,8 @@ import { Analytics } from '@vercel/analytics/react';
 import './globals.css';
 import SiteHeader from '@/components/layout/SiteHeader';
 import SiteFooter from '@/components/layout/SiteFooter';
+import ExperienceProvider from '@/components/experience/ExperienceProvider';
+import ExperienceGate from '@/components/experience/ExperienceGate';
 import { siteConfig } from '@/lib/site';
 
 const cinzel = Cinzel_Decorative({
@@ -86,10 +88,15 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <a href="#main" className="skip-link">
           Skip to content
         </a>
-        <SiteHeader />
-        <main id="main">{children}</main>
-        <SiteFooter />
-        <Analytics />
+        <ExperienceProvider>
+          <SiteHeader />
+          <main id="main">{children}</main>
+          <SiteFooter />
+          <ExperienceGate />
+        </ExperienceProvider>
+        {/* Vercel Web Analytics is only served by Vercel's edge; loading it
+            anywhere else just 404s, so mount it only on Vercel. */}
+        {process.env.VERCEL ? <Analytics /> : null}
       </body>
     </html>
   );

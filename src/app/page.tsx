@@ -159,6 +159,7 @@ export default function HomePage() {
               src={mapImages.middleEarth}
               alt="Map of Middle-earth"
               fill
+              priority
               sizes="(max-width: 1024px) 100vw, 50vw"
               className="object-cover"
             />

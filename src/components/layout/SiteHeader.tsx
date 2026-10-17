@@ -21,6 +21,7 @@ import {
 import { navGroups, siteConfig } from '@/lib/site';
 import SearchDialog from './SearchDialog';
 import ThemeToggle from './ThemeToggle';
+import GuideButton from './GuideButton';
 
 const icons: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   map: MapIcon,
@@ -146,6 +147,7 @@ export default function SiteHeader() {
 
         <div className="flex items-center gap-2">
           <SearchDialog />
+          <GuideButton className="hidden sm:inline-flex" />
           <ThemeToggle />
           <button
             type="button"
@@ -180,6 +182,7 @@ export default function SiteHeader() {
                 </ul>
               </div>
             ))}
+            <GuideButton className="w-full justify-center" />
           </nav>
         </div>
       )}
