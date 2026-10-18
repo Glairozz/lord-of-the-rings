@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import type { EntityRef } from '@/lib/content';
 import EntityCard from '@/components/ui/EntityCard';
 import EmptyState from '@/components/ui/EmptyState';
@@ -33,6 +33,20 @@ const sortLabels: Record<SortMode, string> = {
   'name-desc': 'Name (Z–A)',
 };
 
+/** Shared styling so the search field and every select share one height and shape. */
+const controlClass =
+  'h-10 w-full rounded-lg border border-border bg-night px-3 text-sm text-parchment placeholder:text-mist focus:border-gold focus:outline-none sm:w-auto';
+
+/** Labelled control used in the filter row. */
+function FilterField({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <label className="flex min-w-0 flex-col gap-1.5">
+      <span className="font-display text-[11px] uppercase tracking-[0.18em] text-gold">{label}</span>
+      {children}
+    </label>
+  );
+}
+
 export default function Directory({
   items,
   facets = [],
@@ -41,6 +55,8 @@ export default function Directory({
   groupOrder,
   pageSize = 12,
   searchPlaceholder = 'Search by name…',
+  gridClassName = 'grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
+  badgeFacet,
 }: {
   items: DirectoryItem[];
   facets?: FacetDef[];
@@ -52,6 +68,10 @@ export default function Directory({
   groupOrder?: Record<string, string[]>;
   pageSize?: number;
   searchPlaceholder?: string;
+  /** Responsive card-grid classes. Defaults to 1 / 2 / 3 / 4 columns by breakpoint. */
+  gridClassName?: string;
+  /** Facet key whose value is shown as the card badge (e.g. `kind` → "Culture"). */
+  badgeFacet?: string;
 }) {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<Record<string, string>>({});
@@ -144,41 +164,47 @@ export default function Directory({
   const hasFilters = query.trim() !== '' || Object.keys(selected).length > 0;
 
   const cardGrid = (list: DirectoryItem[]) => (
-    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className={gridClassName}>
       {list.map((item, i) => (
-        <EntityCard key={`${item.type}-${item.id}`} entity={item} priority={i < 4} />
+        <EntityCard
+          key={`${item.type}-${item.id}`}
+          entity={item}
+          badge={badgeFacet ? item.facets[badgeFacet] : undefined}
+          priority={i < 4}
+        />
       ))}
     </div>
   );
 
   return (
     <div>
-      <div className="mb-8 flex flex-col gap-4 rounded-xl border border-border bg-night-2/40 p-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <label className="relative flex-1">
-            <span className="sr-only">Search directory</span>
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setPage(1);
-              }}
-              placeholder={searchPlaceholder}
-              className="w-full rounded-lg border border-border bg-night px-4 py-2.5 text-sm text-parchment placeholder:text-mist focus:border-gold focus:outline-none"
-            />
-          </label>
+      <div className="mb-8 rounded-xl border border-border bg-night-2/40 p-4 sm:p-5">
+        {/* Search — takes the full available width on every breakpoint. */}
+        <label className="relative block">
+          <span className="sr-only">Search directory</span>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
+            placeholder={searchPlaceholder}
+            className="h-10 w-full rounded-lg border border-border bg-night px-4 text-sm text-parchment placeholder:text-mist focus:border-gold focus:outline-none"
+          />
+        </label>
 
+        {/* Controls — one aligned row on desktop, stacked full-width on mobile. */}
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
           {groupOptions.length > 0 && (
-            <label className="flex items-center gap-2 text-sm text-mist">
-              <span className="shrink-0">Group by</span>
+            <FilterField label="Group by">
               <select
                 value={groupBy}
                 onChange={(e) => {
                   setGroupBy(e.target.value);
                   setPage(1);
                 }}
-                className="rounded-lg border border-border bg-night px-3 py-2.5 text-sm text-parchment focus:border-gold focus:outline-none"
+                className={controlClass}
               >
                 <option value="">No grouping</option>
                 {groupOptions.map((g) => (
@@ -187,18 +213,17 @@ export default function Directory({
                   </option>
                 ))}
               </select>
-            </label>
+            </FilterField>
           )}
 
-          <label className="flex items-center gap-2 text-sm text-mist">
-            <span className="shrink-0">Sort</span>
+          <FilterField label="Sort">
             <select
               value={sort}
               onChange={(e) => {
                 setSort(e.target.value as SortMode);
                 setPage(1);
               }}
-              className="rounded-lg border border-border bg-night px-3 py-2.5 text-sm text-parchment focus:border-gold focus:outline-none"
+              className={controlClass}
             >
               {(Object.keys(sortLabels) as SortMode[]).map((mode) => (
                 <option key={mode} value={mode}>
@@ -206,45 +231,43 @@ export default function Directory({
                 </option>
               ))}
             </select>
-          </label>
+          </FilterField>
+
+          {facetDefs.map((f) => (
+            <FilterField key={f.key} label={f.label}>
+              <select
+                value={selected[f.key] ?? ''}
+                onChange={(e) => updateFacet(f.key, e.target.value)}
+                className={controlClass}
+              >
+                <option value="">All</option>
+                {f.options.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </FilterField>
+          ))}
         </div>
 
-        {facetDefs.length > 0 && (
-          <div className="flex flex-wrap gap-3">
-            {facetDefs.map((f) => (
-              <label key={f.key} className="flex items-center gap-2 text-xs text-mist">
-                <span className="uppercase tracking-wider text-gold">{f.label}</span>
-                <select
-                  value={selected[f.key] ?? ''}
-                  onChange={(e) => updateFacet(f.key, e.target.value)}
-                  className="rounded-lg border border-border bg-night px-3 py-2 text-sm text-parchment focus:border-gold focus:outline-none"
-                >
-                  <option value="">All</option>
-                  {f.options.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ))}
-            {hasFilters && (
-              <button
-                type="button"
-                onClick={clearAll}
-                className="rounded-lg border border-border px-3 py-2 text-xs text-parchment-2 transition-colors hover:border-gold hover:text-gold-light"
-              >
-                Clear filters
-              </button>
-            )}
-          </div>
-        )}
-
-        <p className="text-xs text-mist" aria-live="polite">
-          {filtered.length} {filtered.length === 1 ? 'entry' : 'entries'}
-          {hasFilters ? ' match your filters' : ''}
-          {groupingActive ? ' · grouped below' : ''}
-        </p>
+        {/* Results count and reset — separated from the controls. */}
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-3">
+          <p className="text-xs text-mist" aria-live="polite">
+            {filtered.length} {filtered.length === 1 ? 'entry' : 'entries'}
+            {hasFilters ? ' match your filters' : ''}
+            {groupingActive ? ' · grouped below' : ''}
+          </p>
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={clearAll}
+              className="rounded-lg border border-border px-3 py-1.5 text-xs text-parchment-2 transition-colors hover:border-gold hover:text-gold-light"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
       </div>
 
       {pageItems.length === 0 ? (
@@ -273,23 +296,23 @@ export default function Directory({
       )}
 
       {totalPages > 1 && (
-        <nav aria-label="Pagination" className="mt-10 flex items-center justify-center gap-2">
+        <nav aria-label="Pagination" className="mt-12 flex flex-wrap items-center justify-center gap-2">
           <button
             type="button"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={current === 1}
-            className="rounded-lg border border-border px-3 py-2 text-sm text-parchment-2 transition-colors hover:border-gold hover:text-gold-light disabled:opacity-40"
+            className="rounded-lg border border-border px-4 py-2 text-sm text-parchment-2 transition-colors hover:border-gold hover:text-gold-light disabled:opacity-40"
           >
             Previous
           </button>
-          <span className="px-3 text-sm text-mist">
-            Page {current} of {totalPages}
+          <span className="rounded-lg border border-border bg-night-2/60 px-4 py-2 text-sm text-mist">
+            Page <span className="font-semibold text-parchment">{current}</span> of {totalPages}
           </span>
           <button
             type="button"
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={current === totalPages}
-            className="rounded-lg border border-border px-3 py-2 text-sm text-parchment-2 transition-colors hover:border-gold hover:text-gold-light disabled:opacity-40"
+            className="rounded-lg border border-border px-4 py-2 text-sm text-parchment-2 transition-colors hover:border-gold hover:text-gold-light disabled:opacity-40"
           >
             Next
           </button>
