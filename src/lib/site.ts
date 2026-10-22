@@ -16,21 +16,23 @@ export const navGroups: NavGroup[] = [
   {
     label: 'Explore',
     items: [
+      { label: 'Home', href: '/', description: 'Return to the gateway', icon: 'home' },
       { label: 'The Atlas', href: '/atlas', description: 'Interactive map of Middle-earth', icon: 'map' },
       { label: 'Locations', href: '/locations', description: 'Regions, cities and landmarks', icon: 'mountain' },
     ],
   },
   {
-    label: 'Lore Archives',
+    label: 'Characters',
     items: [
       { label: 'Characters', href: '/characters', description: 'Profiles, lineages and deeds', icon: 'users' },
+      { label: 'Races & Creatures', href: '/races', description: 'Browse by kind and creature type', icon: 'trees' },
       { label: 'Peoples & Cultures', href: '/peoples', description: 'Races, kingdoms and factions', icon: 'flag' },
-      { label: 'Artifacts', href: '/artifacts', description: 'Rings, weapons and jewels', icon: 'gem' },
     ],
   },
   {
-    label: 'History',
+    label: 'Lore',
     items: [
+      { label: 'Artifacts', href: '/artifacts', description: 'Rings, weapons and jewels', icon: 'gem' },
       { label: 'The History of Arda', href: '/history', description: 'Ages, wars and turning points', icon: 'scroll' },
     ],
   },
@@ -42,8 +44,11 @@ export const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: 'Community',
+    label: 'About',
     items: [
+      { label: 'About', href: '/about', description: 'The archive and its aims', icon: 'info' },
+      { label: 'Editorial Policy', href: '/about/editorial-policy', description: 'Sources, continuity and corrections', icon: 'file' },
+      { label: 'Sources', href: '/about/sources', description: 'Works cited', icon: 'book' },
       { label: 'Discussion Hall', href: '/discussions', description: 'Theories, debates and questions', icon: 'message' },
     ],
   },
@@ -60,18 +65,21 @@ export const siteConfig = {
 
 export const footerLinks = {
   explore: [
+    { label: 'Home', href: '/' },
     { label: 'Atlas', href: '/atlas' },
     { label: 'Locations', href: '/locations' },
     { label: 'Characters', href: '/characters' },
-    { label: 'Peoples', href: '/peoples' },
+    { label: 'Races & Creatures', href: '/races' },
   ],
   study: [
+    { label: 'Peoples & Cultures', href: '/peoples' },
     { label: 'History of Arda', href: '/history' },
     { label: 'Artifacts', href: '/artifacts' },
     { label: 'Books & Adaptations', href: '/library' },
     { label: 'Themes', href: '/themes' },
   ],
   about: [
+    { label: 'About', href: '/about' },
     { label: 'Discussion Hall', href: '/discussions' },
     { label: 'Search', href: '/search' },
     { label: 'Editorial Policy', href: '/about/editorial-policy' },

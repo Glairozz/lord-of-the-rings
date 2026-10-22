@@ -1,28 +1,32 @@
 import type { Metadata } from 'next';
-import { characters, characterRaceGroups } from '@/data/characters';
-import Directory from '@/components/directory/Directory';
+import { characterDirectoryItems } from '@/lib/characters';
+import CharacterDirectory from '@/components/characters/CharacterDirectory';
 import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import SectionHeading from '@/components/ui/SectionHeading';
-import { item, baseFacets, continuityFacet, humanize } from '@/lib/pages';
 
 export const metadata: Metadata = {
   title: 'Characters',
   description:
-    'Profiles of the peoples of Middle-earth — hobbits, elves, dwarves, men, wizards and the powers of the Elder Days — with lineages, deeds and source references.',
+    'Profiles of the peoples of Middle-earth — hobbits, elves, dwarves, men, wizards and the powers of the Elder Days — organised by race and creature type.',
   alternates: { canonical: '/characters' },
 };
 
-const raceLabels = new Map(characterRaceGroups.map((g) => [g.id, g.label]));
+export default async function CharactersPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const items = characterDirectoryItems();
 
-export default function CharactersPage() {
-  const items = characters.map((c) =>
-    item(
-      'character',
-      c,
-      baseFacets(c.continuity, { race: raceLabels.get(c.race) ?? humanize(c.race) }),
-      [c.race, ...(c.aliases ?? []), ...(c.titles ?? [])].join(' '),
-    ),
-  );
+  const initialQuery = typeof params.q === 'string' ? params.q : '';
+  const initialFilters: Record<string, string> = {};
+  if (typeof params.race === 'string') initialFilters.race = params.race;
+  if (typeof params.group === 'string') initialFilters.race = params.group;
+  if (typeof params.people === 'string') initialFilters.people = params.people;
+  if (typeof params.affiliation === 'string') initialFilters.affiliation = params.affiliation;
+  if (typeof params.role === 'string') initialFilters.role = params.role;
+  if (typeof params.continuity === 'string') initialFilters.continuity = params.continuity;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12">
@@ -30,17 +34,9 @@ export default function CharactersPage() {
       <SectionHeading
         eyebrow="Lore archive"
         title="Characters"
-        intro="Everyone from the Shire to the Elder Days, gathered in one place. Continuity labels mark whether a figure comes from Tolkien’s own texts, later published writings, or an adaptation."
+        intro="The peoples and powers of Middle-earth, gathered by race and creature type. Search, filter by allegiance or role, and explore each figure in depth."
       />
-      <Directory
-        items={items}
-        searchPlaceholder="Search by name, title or alias…"
-        facets={[
-          { key: 'race', label: 'People' },
-          continuityFacet,
-        ]}
-        pageSize={12}
-      />
+      <CharacterDirectory items={items} initialQuery={initialQuery} initialFilters={initialFilters} />
     </div>
   );
 }

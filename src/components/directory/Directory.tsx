@@ -57,6 +57,8 @@ export default function Directory({
   searchPlaceholder = 'Search by name…',
   gridClassName = 'grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
   badgeFacet,
+  initialQuery = '',
+  initialFilters = {},
 }: {
   items: DirectoryItem[];
   facets?: FacetDef[];
@@ -72,9 +74,11 @@ export default function Directory({
   gridClassName?: string;
   /** Facet key whose value is shown as the card badge (e.g. `kind` → "Culture"). */
   badgeFacet?: string;
+  initialQuery?: string;
+  initialFilters?: Record<string, string>;
 }) {
-  const [query, setQuery] = useState('');
-  const [selected, setSelected] = useState<Record<string, string>>({});
+  const [query, setQuery] = useState(initialQuery);
+  const [selected, setSelected] = useState<Record<string, string>>(initialFilters);
   const [sort, setSort] = useState<SortMode>('default');
   const [groupBy, setGroupBy] = useState<string>(defaultGroupBy);
   const [page, setPage] = useState(1);

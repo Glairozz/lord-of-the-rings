@@ -7,14 +7,18 @@ import {
   BookOpen,
   ChevronDown,
   Compass,
+  FileText,
   Flag,
   Gem,
+  Home,
+  Info,
   Map as MapIcon,
   Menu,
   MessageSquare,
   Mountain,
   Quote,
   ScrollText,
+  Trees,
   Users,
   X,
 } from 'lucide-react';
@@ -24,16 +28,20 @@ import ThemeToggle from './ThemeToggle';
 import GuideButton from './GuideButton';
 
 const icons: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+  home: Home,
   map: MapIcon,
   mountain: Mountain,
   users: Users,
   flag: Flag,
+  trees: Trees,
   gem: Gem,
   scroll: ScrollText,
   book: BookOpen,
   quote: Quote,
   message: MessageSquare,
   compass: Compass,
+  info: Info,
+  file: FileText,
 };
 
 export default function SiteHeader() {

@@ -10,7 +10,9 @@ import RelatedGrid from '@/components/entity/RelatedGrid';
 import RelatedLink from '@/components/ui/RelatedLink';
 import { Prose, TagList, BulletList, InfoList, SourceList, Callout } from '@/components/ui/blocks';
 import { resolveAny, resolveRef, resolveMany } from '@/lib/content';
-import { toRef, humanize } from '@/lib/pages';
+import { toRef } from '@/lib/pages';
+import { characterAffiliations, groupsForCharacter } from '@/data/character-groups';
+import Link from 'next/link';
 
 export function generateStaticParams() {
   return characters.map((c) => ({ slug: c.slug }));
@@ -81,8 +83,13 @@ export default async function CharacterPage({ params }: { params: Promise<{ slug
   const artifacts = resolveMany(character.artifactIds);
   const related = resolveMany(character.relatedIds);
 
+  const groups = groupsForCharacter(character.id);
+  const primaryGroup = groups[0];
+  const affiliation = characterAffiliations[character.id];
+
   const meta = [
-    { label: 'People', value: humanize(character.race) },
+    primaryGroup ? { label: 'Race & kind', value: primaryGroup.label } : null,
+    affiliation ? { label: 'Allegiance', value: affiliation } : null,
     character.titles?.length ? { label: 'Titles', value: character.titles.join(', ') } : null,
     character.gender ? { label: 'Gender', value: character.gender } : null,
     character.birthDate ? { label: 'Born', value: character.birthDate } : null,
@@ -99,7 +106,11 @@ export default async function CharacterPage({ params }: { params: Promise<{ slug
         summary={character.summary}
         image={character.image}
         continuity={character.continuity}
-        crumbs={[{ label: 'Characters', href: '/characters' }, { label: character.name }]}
+        crumbs={[
+          { label: 'Characters', href: '/characters' },
+          primaryGroup ? { label: primaryGroup.shortLabel, href: `/races/${primaryGroup.id}` } : null,
+          { label: character.name },
+        ].filter((c): c is NonNullable<typeof c> => Boolean(c))}
         meta={meta}
       />
 
@@ -110,9 +121,29 @@ export default async function CharacterPage({ params }: { params: Promise<{ slug
               <h2 className="mb-4 font-display text-2xl text-parchment">Overview</h2>
               <div className="rule-gold mb-6" />
               <Prose text={character.overview} />
-              {character.ancestry && (
-                <div className="mt-6">
-                  <InfoList items={[{ label: 'Ancestry', value: character.ancestry }]} />
+              {(groups.length > 0 || affiliation || character.ancestry) && (
+                <div className="mt-6 panel-soft p-5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {groups.map((group) => (
+                      <Link
+                        key={group.id}
+                        href={`/races/${group.id}`}
+                        className="rounded-full border border-border px-3 py-1 text-xs uppercase tracking-[0.16em] text-parchment-2 transition-colors hover:border-gold hover:text-gold-light"
+                      >
+                        {group.shortLabel}
+                      </Link>
+                    ))}
+                    {affiliation && (
+                      <span className="rounded-full border border-gold/40 px-3 py-1 text-xs uppercase tracking-[0.16em] text-gold-light">
+                        {affiliation}
+                      </span>
+                    )}
+                  </div>
+                  {character.ancestry && (
+                    <div className="mt-4">
+                      <InfoList items={[{ label: 'Ancestry', value: character.ancestry }]} />
+                    </div>
+                  )}
                 </div>
               )}
             </section>
