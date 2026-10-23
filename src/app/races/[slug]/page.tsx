@@ -60,7 +60,7 @@ export default async function RaceDetailPage({ params }: { params: Promise<{ slu
               <p className="mt-4 text-lg leading-relaxed text-parchment-2">{group.description}</p>
             </div>
             <Link
-              href="/characters"
+              href={`/characters?race=${group.id}`}
               className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm text-parchment transition-colors hover:border-gold hover:text-gold-light"
             >
               Browse all characters

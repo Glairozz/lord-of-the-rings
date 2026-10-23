@@ -143,6 +143,17 @@ export const characterGroups: CharacterGroup[] = [
     members: ['azog', 'bolg', 'lurtz', 'ugluk', 'grishnakh', 'mauhur', 'gorbag', 'shagrat'],
   },
   {
+    id: 'uruk-hai',
+    label: 'Uruk-hai',
+    shortLabel: 'Uruk-hai',
+    tagline: 'The larger, sun-hardened soldiers of Isengard and the Morgul vale.',
+    description:
+      'Uruk-hai — the “Uruk-folk” — are the great soldier-orcs of the late Third Age: taller, stronger and more disciplined than common Orcs, and able to march under the sun. Saruman bred his own companies at Isengard, while the Uruks of Minas Morgul held the pass of Cirith Ungol. They remain Orcs in kind, so this archive also lists them among the Orcs, Goblins & Uruk-hai.',
+    icon: 'Swords',
+    image: locationImages.isengard,
+    members: ['lurtz', 'ugluk', 'gorbag', 'shagrat'],
+  },
+  {
     id: 'dragons',
     label: 'Dragons & Great Beasts',
     shortLabel: 'Dragons',

@@ -1,10 +1,14 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import type { CharacterDirectoryItem } from '@/lib/characters';
+import { characterGroupById } from '@/data/character-groups';
 import LoreImage from '@/components/ui/LoreImage';
+import { groupIcons } from './groupIcons';
 
 export default function CharacterCard({ item }: { item: CharacterDirectoryItem }) {
   const meta = [item.groupLabel, item.affiliation].filter(Boolean).join(' · ');
+  const group = characterGroupById.get(item.groupId);
+  const Icon = group ? groupIcons[group.icon] : undefined;
 
   return (
     <Link
@@ -21,7 +25,8 @@ export default function CharacterCard({ item }: { item: CharacterDirectoryItem }
         />
         <div className="absolute inset-0 bg-gradient-to-t from-night via-night/20 to-transparent" />
         <div className="absolute left-3 top-3 flex flex-wrap gap-1">
-          <span className="rounded-full border border-gold/40 bg-night/70 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-gold-light">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-night/70 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-gold-light">
+            {Icon ? <Icon size={11} aria-hidden /> : null}
             {item.groupLabel}
           </span>
           {item.roles.slice(0, 1).map((role) => (

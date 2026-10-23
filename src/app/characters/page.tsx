@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { characterDirectoryItems } from '@/lib/characters';
 import CharacterDirectory from '@/components/characters/CharacterDirectory';
 import Breadcrumbs from '@/components/layout/Breadcrumbs';
@@ -7,7 +8,7 @@ import SectionHeading from '@/components/ui/SectionHeading';
 export const metadata: Metadata = {
   title: 'Characters',
   description:
-    'Profiles of the peoples of Middle-earth — hobbits, elves, dwarves, men, wizards and the powers of the Elder Days — organised by race and creature type.',
+    'Browse the characters of Middle-earth by race and creature type — hobbits, humans, elves, dwarves, wizards, orcs, Uruk-hai, Maiar, dragons and more.',
   alternates: { canonical: '/characters' },
 };
 
@@ -34,7 +35,12 @@ export default async function CharactersPage({
       <SectionHeading
         eyebrow="Lore archive"
         title="Characters"
-        intro="The peoples and powers of Middle-earth, gathered by race and creature type. Search, filter by allegiance or role, and explore each figure in depth."
+        intro="Explore the peoples and powers of Middle-earth by race and creature type. Search by name, then narrow the archive by allegiance, role or source — some figures belong to more than one kind."
+        action={
+          <Link href="/races" className="text-sm text-gold-light hover:text-parchment">
+            Race overviews →
+          </Link>
+        }
       />
       <CharacterDirectory items={items} initialQuery={initialQuery} initialFilters={initialFilters} />
     </div>

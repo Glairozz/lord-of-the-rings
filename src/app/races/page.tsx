@@ -18,7 +18,7 @@ export default function RacesPage() {
       <SectionHeading
         eyebrow="By kind"
         title="Races & Creatures of Middle-earth"
-        intro="Organised by what a figure is, not by the alphabet. Only categories with recorded members are shown, and some figures belong to more than one kind."
+        intro="Browse the figures of Middle-earth by what they are — race, kindred or creature-kind. Only categories with recorded members are shown, and some figures belong to more than one kind."
       />
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {visibleCharacterGroups.map((group) => (
